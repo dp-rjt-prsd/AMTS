@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Repair Management</title>
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
+</head>
+<body>
+
+<header class="navbar">
+
+    <h2>Asset Management System</h2>
+
+    <div>
+
+        <button onclick="window.location.href='dashboard.html'">
+            Dashboard
+        </button>
+
+        <button onclick="window.location.href='assets.html'">
+            Assets
+        </button>
+
+        <button onclick="window.location.href='transfers.html'">
+            Transfers
+        </button>
+
+        <button onclick="logout()">
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+<main>
+
+    <h1>Repair Management</h1>
+
+    <!-- SEND TO REPAIR -->
+
+    <section class="asset-form">
+
+        <h2>Send Asset For Repair</h2>
+
+        <form id="repairForm">
+
+            <input
+                type="text"
+                id="repair_asset_id"
+                placeholder="Asset ID"
+                required
+            >
+
+            <textarea
+                id="issue_description"
+                placeholder="Issue Description"
+                required
+            ></textarea>
+
+            <button type="submit">
+                Send For Repair
+            </button>
+
+        </form>
+
+    </section>
+
+    <!-- RETURN FROM REPAIR -->
+
+    <section class="asset-form">
+
+        <h2>Return Asset From Repair</h2>
+
+        <form id="returnRepairForm">
+
+            <input
+                type="number"
+                id="repair_id"
+                placeholder="Repair ID"
+                required
+            >
+
+            <button type="submit">
+                Return Asset
+            </button>
+
+        </form>
+
+    </section>
+
+    <!-- REPAIR HISTORY -->
+
+    <section>
+
+        <h2>Repair History</h2>
+
+        <button onclick="loadRepairLogs()">
+            Refresh
+        </button>
+
+        <table>
+
+            <thead>
+
+            <tr>
+
+                <th>Repair ID</th>
+
+                <th>Asset ID</th>
+
+                <th>Issue</th>
+
+                <th>Sent At</th>
+
+                <th>Returned At</th>
+
+            </tr>
+
+            </thead>
+
+            <tbody id="repairTable">
+
+            </tbody>
+
+        </table>
+
+    </section>
+
+</main>
+
+<script src="js/repairs.js"></script>
+
+</body>
+</html>

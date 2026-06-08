@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Transfers</title>
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
+</head>
+<body>
+
+<header class="navbar">
+
+    <h2>Asset Management System</h2>
+
+    <div>
+
+        <button onclick="window.location.href='dashboard.html'">
+            Dashboard
+        </button>
+
+        <button onclick="window.location.href='assets.html'">
+            Assets
+        </button>
+
+        <button onclick="logout()">
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+<main>
+
+    <h1>Asset Transfers</h1>
+
+    <section class="asset-form">
+
+        <h2>Transfer Asset</h2>
+
+        <form id="transferForm">
+
+            <input
+                type="text"
+                id="asset_id"
+                placeholder="Asset ID"
+                required
+            >
+
+            <input
+                type="number"
+                id="to_user_id"
+                placeholder="To User ID"
+                required
+            >
+
+            <textarea
+                id="remarks"
+                placeholder="Remarks"
+            ></textarea>
+
+            <button type="submit">
+                Transfer Asset
+            </button>
+
+        </form>
+
+    </section>
+
+    <section>
+
+        <h2>Transfer History</h2>
+
+        <table>
+
+            <thead>
+
+            <tr>
+
+                <th>ID</th>
+
+                <th>Asset</th>
+
+                <th>From</th>
+
+                <th>To</th>
+
+                <th>Remarks</th>
+
+                <th>Timestamp</th>
+
+            </tr>
+
+            </thead>
+
+            <tbody id="transferTable">
+
+            </tbody>
+
+        </table>
+
+    </section>
+
+</main>
+
+<script src="js/transfers.js"></script>
+
+</body>
+</html>

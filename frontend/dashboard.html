@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMS Dashboard</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="navbar">
+
+        <h2>Asset Management System</h2>
+
+        <button onclick="logout()">
+            Logout
+        </button>
+
+    </header>
+
+    <main>
+
+        <h1>Dashboard</h1>
+
+        <div class="card-container">
+
+            <div class="card">
+                <h3>Total Assets</h3>
+                <p id="totalAssets">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Total Users</h3>
+                <p id="totalUsers">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Available Assets</h3>
+                <p id="availableAssets">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Assigned Assets</h3>
+                <p id="assignedAssets">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Repair Assets</h3>
+                <p id="repairAssets">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Retired Assets</h3>
+                <p id="retiredAssets">0</p>
+            </div>
+
+        </div>
+
+        <h2>Recent Transfers</h2>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Transfer ID</th>
+                    <th>Asset ID</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+
+            <tbody id="transferTable">
+
+            </tbody>
+
+        </table>
+
+    </main>
+
+    <script src="js/dashboard.js"></script>
+
+</body>
+</html>
