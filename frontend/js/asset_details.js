@@ -2,13 +2,7 @@ const API_BASE_URL =
     "http://127.0.0.1:8000";
 
 const token =
-    localStorage.getItem("token");
-
-if (!token) {
-
-    window.location.href =
-        "login.html";
-}
+    requireAuth();
 
 const params =
     new URLSearchParams(
@@ -16,184 +10,343 @@ const params =
     );
 
 const assetId =
-    params.get("asset_id");
+    params.get(
+        "asset_id"
+    );
 
 if (!assetId) {
-
-    alert("No Asset Selected");
 
     window.location.href =
         "assets.html";
 }
 
-loadAsset();
+// ======================================
+// INIT
+// ======================================
 
-loadTransferHistory();
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-loadRepairHistory();
+        applyRoleRules();
 
+        loadCurrentUser();
 
-// ASSET INFO
+        loadAsset();
+
+        loadTransferHistory();
+
+        loadRepairHistory();
+    }
+);
+
+// ======================================
+// ASSET DETAILS
+// ======================================
 
 async function loadAsset() {
 
-    const response =
-        await fetch(
-            `${API_BASE_URL}/assets/${assetId}`,
-            {
-                headers: {
-                    Authorization:
-                        `Bearer ${token}`
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/assets/${assetId}`,
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
                 }
-            }
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed to load asset"
+            );
+        }
+
+        const asset =
+            await response.json();
+
+        document.getElementById(
+            "assetId"
+        ).innerText =
+            asset.asset_id;
+
+        document.getElementById(
+            "assetName"
+        ).innerText =
+            asset.asset_name;
+
+        document.getElementById(
+            "assetStatus"
+        ).innerHTML =
+            getStatusBadge(
+                asset.status_name
+            );
+
+        document.getElementById(
+            "currentHolder"
+        ).innerText =
+            asset.holder_name
+            ?? "-";
+
+        document.getElementById(
+            "assetType"
+        ).innerText =
+            asset.asset_type_name
+            ?? "-";
+
+        document.getElementById(
+            "serialNumber"
+        ).innerText =
+            asset.serial_number
+            ?? "-";
+
+        document.getElementById(
+            "price"
+        ).innerText =
+            `₹${asset.price ?? 0}`;
+
+        document.getElementById(
+            "remarks"
+        ).innerText =
+            asset.remarks
+            ?? "-";
+    }
+    catch (error) {
+
+        console.error(error);
+
+        showToast(
+            "Unable to load asset",
+            "error"
         );
-
-    const asset =
-        await response.json();
-
-    document.getElementById(
-        "assetId"
-    ).innerText =
-        asset.asset_id;
-
-    document.getElementById(
-        "assetName"
-    ).innerText =
-        asset.asset_name;
-
-    document.getElementById(
-        "assetStatus"
-    ).innerText =
-        asset.status_id;
-
-    document.getElementById(
-        "currentHolder"
-    ).innerText =
-        asset.current_holder_id ?? "-";
-
-    document.getElementById(
-        "serialNumber"
-    ).innerText =
-        asset.serial_number ?? "-";
-
-    document.getElementById(
-        "price"
-    ).innerText =
-        asset.price ?? 0;
-
-    document.getElementById(
-        "remarks"
-    ).innerText =
-        asset.remarks ?? "-";
+    }
 }
 
-
-// TRANSFERS
+// ======================================
+// TRANSFER HISTORY
+// ======================================
 
 async function loadTransferHistory() {
-
-    const response =
-        await fetch(
-            `${API_BASE_URL}/assets/${assetId}/transfers`,
-            {
-                headers: {
-                    Authorization:
-                        `Bearer ${token}`
-                }
-            }
-        );
-
-    const transfers =
-        await response.json();
 
     const table =
         document.getElementById(
             "transferHistory"
         );
 
-    table.innerHTML = "";
-
-    transfers.forEach(
-        transfer => {
-
-            table.innerHTML += `
-
-            <tr>
-
-                <td>${transfer.transfer_id}</td>
-
-                <td>${transfer.from_user_id ?? "-"}</td>
-
-                <td>${transfer.to_user_id ?? "-"}</td>
-
-                <td>${transfer.remarks ?? ""}</td>
-
-                <td>${transfer.transferred_at}</td>
-
-            </tr>
-
-            `;
-        }
+    showTableLoader(
+        table,
+        5
     );
-}
 
+    try {
 
-// REPAIRS
-
-async function loadRepairHistory() {
-
-    const response =
-        await fetch(
-            `${API_BASE_URL}/assets/${assetId}/repairs`,
-            {
-                headers: {
-                    Authorization:
-                        `Bearer ${token}`
+        const response =
+            await fetch(
+                `${API_BASE_URL}/assets/${assetId}/transfers`,
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
                 }
-            }
+            );
+
+        const transfers =
+            await response.json();
+
+        renderTransfers(
+            transfers
         );
 
-    const repairs =
-        await response.json();
+    }
+    catch (error) {
+
+        console.error(error);
+
+        table.innerHTML =
+            emptyTableRow(
+                5,
+                "Unable to load transfer history"
+            );
+    }
+}
+
+function renderTransfers(
+    transfers
+) {
+
+    const table =
+        document.getElementById(
+            "transferHistory"
+        );
+
+    if (
+        !transfers ||
+        transfers.length === 0
+    ) {
+
+        table.innerHTML =
+            emptyTableRow(
+                5,
+                "No transfer history found"
+            );
+
+        return;
+    }
+
+    table.innerHTML =
+        transfers.map(
+            transfer => `
+
+        <tr>
+
+            <td>
+                ${transfer.transfer_id}
+            </td>
+
+            <td>
+                ${
+                    transfer.from_user_name
+                    ?? "-"
+                }
+            </td>
+
+            <td>
+                ${
+                    transfer.to_user_name
+                    ?? "-"
+                }
+            </td>
+
+            <td>
+                ${
+                    transfer.remarks
+                    ?? "-"
+                }
+            </td>
+
+            <td>
+                ${formatDate(
+                    transfer.transferred_at
+                )}
+            </td>
+
+        </tr>
+
+        `
+        ).join("");
+}
+
+// ======================================
+// REPAIR HISTORY
+// ======================================
+
+async function loadRepairHistory() {
 
     const table =
         document.getElementById(
             "repairHistory"
         );
 
-    table.innerHTML = "";
-
-    repairs.forEach(
-        repair => {
-
-            table.innerHTML += `
-
-            <tr>
-
-                <td>${repair.repair_id}</td>
-
-                <td>${repair.issue_description}</td>
-
-                <td>${repair.sent_at}</td>
-
-                <td>${repair.returned_at ?? "-"}</td>
-
-            </tr>
-
-            `;
-        }
+    showTableLoader(
+        table,
+        4
     );
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/assets/${assetId}/repairs`,
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                }
+            );
+
+        const repairs =
+            await response.json();
+
+        renderRepairs(
+            repairs
+        );
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        table.innerHTML =
+            emptyTableRow(
+                4,
+                "Unable to load repair history"
+            );
+    }
 }
 
+function renderRepairs(
+    repairs
+) {
 
-// LOGOUT
+    const table =
+        document.getElementById(
+            "repairHistory"
+        );
 
-function logout() {
+    if (
+        !repairs ||
+        repairs.length === 0
+    ) {
 
-    localStorage.removeItem(
-        "token"
-    );
+        table.innerHTML =
+            emptyTableRow(
+                4,
+                "No repair history found"
+            );
 
-    window.location.href =
-        "login.html";
+        return;
+    }
+
+    table.innerHTML =
+        repairs.map(
+            repair => `
+
+        <tr>
+
+            <td>
+                ${repair.repair_id}
+            </td>
+
+            <td>
+                ${
+                    repair.issue_description
+                }
+            </td>
+
+            <td>
+                ${formatDate(
+                    repair.sent_at
+                )}
+            </td>
+
+            <td>
+                ${
+                    repair.returned_at
+                    ? formatDate(
+                        repair.returned_at
+                    )
+                    : "-"
+                }
+            </td>
+
+        </tr>
+
+        `
+        ).join("");
 }

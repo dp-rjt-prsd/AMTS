@@ -1,45 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMS Login</title>
 
-    <link rel="stylesheet" href="css/style.css">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Asset Management System
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
 </head>
-<body>
+
+<body class="login-page">
 
     <div class="login-container">
 
-        <h1>Asset Management System</h1>
+        <h1>
+            Asset Management System
+        </h1>
+
+        <p
+            style="
+                text-align:center;
+                color:var(--muted);
+                margin-bottom:24px;
+            "
+        >
+            Sign in to continue
+        </p>
 
         <form id="loginForm">
 
-            <input
-                type="email"
-                id="email"
-                placeholder="Email"
-                required
+            <div>
+
+                <label
+                    for="email"
+                    style="
+                        display:block;
+                        margin-bottom:8px;
+                        font-weight:500;
+                    "
+                >
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+            </div>
+
+            <div
+                style="margin-top:16px;"
             >
 
-            <input
-                type="password"
-                id="password"
-                placeholder="Password"
-                required
-            >
+                <label
+                    for="password"
+                    style="
+                        display:block;
+                        margin-bottom:8px;
+                        font-weight:500;
+                    "
+                >
+                    Password
+                </label>
 
-            <button type="submit">
-                Login
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Enter your password"
+                    required
+                >
+
+            </div>
+
+            <button
+                type="submit"
+                style="
+                    width:100%;
+                    margin-top:24px;
+                "
+            >
+                Sign In
             </button>
 
         </form>
 
-        <p id="message"></p>
-
     </div>
 
+    <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
 
 </body>
+
 </html>

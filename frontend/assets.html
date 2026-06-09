@@ -1,157 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assets</title>
 
-    <link rel="stylesheet" href="css/style.css">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Asset Management
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
 </head>
+
 <body>
 
-    <header class="navbar">
+<div class="app-layout">
 
-        <h2>Asset Management System</h2>
+    <!-- SIDEBAR -->
 
-        <div>
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
 
-            <button onclick="window.location.href='dashboard.html'">
-                Dashboard
-            </button>
+        <div class="sidebar-header">
+            AMS
+        </div>
 
-            <button onclick="logout()">
-                Logout
-            </button>
+        <div class="sidebar-user">
+
+            <div id="sidebarUserName">
+                User
+            </div>
+
+            <small id="sidebarUserRole">
+                Employee
+            </small>
 
         </div>
 
-    </header>
+        <nav class="sidebar-nav">
 
-    <main>
+            <a href="dashboard.html">
+                Dashboard
+            </a>
 
-        <h1>Asset Management</h1>
+            <a
+                href="assets.html"
+                class="active"
+            >
+                Assets
+            </a>
 
-        <section class="asset-form">
+            <a href="transfers.html">
+                Transfers
+            </a>
 
-            <h2>Add New Asset</h2>
+            <a href="repairs.html">
+                Repairs
+            </a>
 
-            <form id="assetForm">
+            <a
+                href="users.html"
+                class="admin-only"
+            >
+                Users
+            </a>
 
-                <input
-                    type="text"
-                    id="asset_id"
-                    placeholder="Asset ID"
-                    required
-                >
+            <a
+                href="#"
+                class="logout"
+                onclick="logout()"
+            >
+                Logout
+            </a>
 
-                <input
-                    type="text"
-                    id="asset_name"
-                    placeholder="Asset Name"
-                    required
-                >
+        </nav>
 
-                <input
-                    type="text"
-                    id="procurement_by"
-                    placeholder="Procured By"
-                >
+    </aside>
 
-                <input
-                    type="text"
-                    id="purchase_order_id"
-                    placeholder="Purchase Order ID"
-                >
+    <!-- MAIN -->
 
-                <input
-                    type="number"
-                    id="asset_type_id"
-                    placeholder="Asset Type ID"
-                    required
-                >
+    <div class="main-area">
 
-                <input
-                    type="number"
-                    id="status_id"
-                    placeholder="Status ID"
-                    required
-                >
+        <header class="topbar">
 
-                <input
-                    type="number"
-                    id="current_holder_id"
-                    placeholder="Current Holder ID"
-                >
+            <div
+                class="menu-toggle"
+                onclick="toggleSidebar()"
+            >
+                ☰
+            </div>
 
-                <input
-                    type="text"
-                    id="serial_number"
-                    placeholder="Serial Number"
-                >
+            <h2>
+                Asset Management
+            </h2>
 
-                <input
-                    type="number"
-                    id="price"
-                    placeholder="Price"
-                >
+            <button
+                onclick="loadAssets()"
+            >
+                Refresh
+            </button>
 
-                <textarea
-                    id="remarks"
-                    placeholder="Remarks"
-                ></textarea>
+        </header>
 
-                <button type="submit">
+        <main class="page-content">
+
+            <h1 class="page-title">
+                Assets
+            </h1>
+
+            <!-- CREATE ASSET -->
+
+            <section class="asset-form">
+
+                <h2>
                     Create Asset
-                </button>
+                </h2>
 
-            </form>
+                <form id="assetForm">
 
-        </section>
+                    <input
+                        type="text"
+                        id="asset_id"
+                        placeholder="Asset ID"
+                        required
+                    >
 
-        <section>
+                    <input
+                        type="text"
+                        id="asset_name"
+                        placeholder="Asset Name"
+                        required
+                    >
+
+                    <input
+                        type="text"
+                        id="serial_number"
+                        placeholder="Serial Number"
+                    >
+
+                    <input
+                        type="number"
+                        id="price"
+                        placeholder="Price"
+                    >
+
+                    <input
+                        type="text"
+                        id="procurement_by"
+                        placeholder="Procured By"
+                    >
+
+                    <input
+                        type="text"
+                        id="purchase_order_id"
+                        placeholder="Purchase Order ID"
+                    >
+
+                    <select
+                        id="asset_type_id"
+                        required
+                    >
+
+                        <option value="">
+                            Select Asset Type
+                        </option>
+
+                    </select>
+
+                    <select
+                        id="status_id"
+                        required
+                    >
+
+                        <option value="">
+                            Select Status
+                        </option>
+
+                    </select>
+
+                    <select
+                        id="current_holder_id"
+                    >
+
+                        <option value="">
+                            No Holder
+                        </option>
+
+                    </select>
+
+                    <textarea
+                        id="remarks"
+                        placeholder="Remarks"
+                    ></textarea>
+
+                    <button
+                        type="submit"
+                    >
+                        Create Asset
+                    </button>
+
+                </form>
+
+            </section>
+
+            <!-- SEARCH -->
 
             <div class="toolbar">
 
                 <input
                     type="text"
                     id="searchBox"
-                    placeholder="Search Asset..."
+                    placeholder="Search Asset ID or Name..."
                 >
-
-                <button onclick="loadAssets()">
-                    Refresh
-                </button>
 
             </div>
 
-            <table>
+            <!-- ASSETS TABLE -->
 
-                <thead>
+            <section>
 
-                    <tr>
+                <div class="table-wrapper">
 
-                        <th>Asset ID</th>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Holder</th>
-                        <th>Serial</th>
-                        <th>Price</th>
+                    <table>
 
-                    </tr>
+                        <thead>
 
-                </thead>
+                        <tr>
 
-                <tbody id="assetTable">
+                            <th>
+                                Asset ID
+                            </th>
 
-                </tbody>
+                            <th>
+                                Asset Name
+                            </th>
 
-            </table>
+                            <th>
+                                Status
+                            </th>
 
-        </section>
+                            <th>
+                                Holder
+                            </th>
 
-    </main>
+                            <th>
+                                Serial Number
+                            </th>
 
-    <script src="js/assets.js"></script>
+                            <th>
+                                Price
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="assetTable"
+                        >
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/assets.js"></script>
 
 </body>
+
 </html>

@@ -2,36 +2,222 @@ const API_BASE_URL =
     "http://127.0.0.1:8000";
 
 const token =
-    localStorage.getItem("token");
+    requireAuth();
 
-if (!token) {
+let allRepairs = [];
 
-    window.location.href =
-        "login.html";
+// ======================================
+// INIT
+// ======================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        applyRoleRules();
+
+        loadCurrentUser();
+
+        loadRepairLogs();
+
+        document
+            .getElementById(
+                "repairForm"
+            )
+            .addEventListener(
+                "submit",
+                sendForRepair
+            );
+
+        document
+            .getElementById(
+                "returnRepairForm"
+            )
+            .addEventListener(
+                "submit",
+                returnFromRepair
+            );
+
+        document
+            .getElementById(
+                "searchBox"
+            )
+            .addEventListener(
+                "keyup",
+                debounce(
+                    filterRepairs,
+                    300
+                )
+            );
+    }
+);
+
+// ======================================
+// LOAD REPAIR LOGS
+// ======================================
+
+async function loadRepairLogs() {
+
+    const table =
+        document.getElementById(
+            "repairTable"
+        );
+
+    showTableLoader(
+        table,
+        5
+    );
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/repair/logs`,
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                }
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed loading repairs"
+            );
+        }
+
+        allRepairs =
+            await response.json();
+
+        renderRepairs(
+            allRepairs
+        );
+    }
+    catch (error) {
+
+        console.error(error);
+
+        table.innerHTML =
+            emptyTableRow(
+                5,
+                "Unable to load repairs"
+            );
+
+        showToast(
+            "Unable to load repairs",
+            "error"
+        );
+    }
 }
 
-loadRepairLogs();
+// ======================================
+// RENDER
+// ======================================
 
-document
-    .getElementById(
-        "repairForm"
-    )
-    .addEventListener(
-        "submit",
-        sendForRepair
+function renderRepairs(
+    repairs
+) {
+
+    const table =
+        document.getElementById(
+            "repairTable"
+        );
+
+    if (
+        !repairs ||
+        repairs.length === 0
+    ) {
+
+        table.innerHTML =
+            emptyTableRow(
+                5,
+                "No repair records found"
+            );
+
+        return;
+    }
+
+    table.innerHTML =
+        repairs.map(
+            repair => `
+
+        <tr>
+
+            <td>
+                ${repair.repair_id}
+            </td>
+
+            <td>
+                ${repair.asset_id}
+            </td>
+
+            <td>
+                ${repair.issue_description}
+            </td>
+
+            <td>
+                ${formatDate(
+                    repair.sent_at
+                )}
+            </td>
+
+            <td>
+                ${
+                    repair.returned_at
+                    ? formatDate(
+                        repair.returned_at
+                    )
+                    : "-"
+                }
+            </td>
+
+        </tr>
+
+        `
+        ).join("");
+}
+
+// ======================================
+// SEARCH
+// ======================================
+
+function filterRepairs() {
+
+    const search =
+        document
+            .getElementById(
+                "searchBox"
+            )
+            .value
+            .toLowerCase();
+
+    const filtered =
+        allRepairs.filter(
+            repair =>
+
+                repair.asset_id
+                    .toString()
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                repair.repair_id
+                    .toString()
+                    .toLowerCase()
+                    .includes(search)
+        );
+
+    renderRepairs(
+        filtered
     );
+}
 
-document
-    .getElementById(
-        "returnRepairForm"
-    )
-    .addEventListener(
-        "submit",
-        returnFromRepair
-    );
-
-
+// ======================================
 // SEND FOR REPAIR
+// ======================================
 
 async function sendForRepair(
     event
@@ -40,14 +226,18 @@ async function sendForRepair(
     event.preventDefault();
 
     const assetId =
-        document.getElementById(
-            "repair_asset_id"
-        ).value;
+        document
+            .getElementById(
+                "repair_asset_id"
+            )
+            .value;
 
     const issue =
-        document.getElementById(
-            "issue_description"
-        ).value;
+        document
+            .getElementById(
+                "issue_description"
+            )
+            .value;
 
     try {
 
@@ -67,36 +257,43 @@ async function sendForRepair(
         const data =
             await response.json();
 
-        if (response.ok) {
+        if (!response.ok) {
 
-            alert(
-                "Asset Sent For Repair"
+            showToast(
+                data.detail ||
+                "Repair request failed",
+                "error"
             );
 
-            document
-                .getElementById(
-                    "repairForm"
-                )
-                .reset();
-
-            loadRepairLogs();
-        }
-        else {
-
-            alert(
-                data.detail
-            );
+            return;
         }
 
+        showToast(
+            "Asset sent for repair"
+        );
+
+        document
+            .getElementById(
+                "repairForm"
+            )
+            .reset();
+
+        loadRepairLogs();
     }
     catch (error) {
 
         console.error(error);
+
+        showToast(
+            "Unable to send asset for repair",
+            "error"
+        );
     }
 }
 
-
+// ======================================
 // RETURN FROM REPAIR
+// ======================================
 
 async function returnFromRepair(
     event
@@ -105,9 +302,11 @@ async function returnFromRepair(
     event.preventDefault();
 
     const repairId =
-        document.getElementById(
-            "repair_id"
-        ).value;
+        document
+            .getElementById(
+                "repair_id"
+            )
+            .value;
 
     try {
 
@@ -127,122 +326,36 @@ async function returnFromRepair(
         const data =
             await response.json();
 
-        if (response.ok) {
+        if (!response.ok) {
 
-            alert(
-                "Asset Returned From Repair"
+            showToast(
+                data.detail ||
+                "Return failed",
+                "error"
             );
 
-            document
-                .getElementById(
-                    "returnRepairForm"
-                )
-                .reset();
-
-            loadRepairLogs();
-        }
-        else {
-
-            alert(
-                data.detail
-            );
+            return;
         }
 
+        showToast(
+            "Asset returned successfully"
+        );
+
+        document
+            .getElementById(
+                "returnRepairForm"
+            )
+            .reset();
+
+        loadRepairLogs();
     }
     catch (error) {
 
         console.error(error);
-    }
-}
 
-
-// LOAD REPAIR LOGS
-
-async function loadRepairLogs() {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/repair/logs`,
-                {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
-                }
-            );
-
-        const logs =
-            await response.json();
-
-        renderRepairLogs(
-            logs
+        showToast(
+            "Unable to return asset",
+            "error"
         );
-
-    }
-    catch (error) {
-
-        console.error(error);
     }
 }
-
-
-// DISPLAY LOGS
-
-function renderRepairLogs(
-    logs
-) {
-
-    const table =
-        document.getElementById(
-            "repairTable"
-        );
-
-    table.innerHTML = "";
-
-    logs.forEach(log => {
-
-        table.innerHTML += `
-
-        <tr>
-
-            <td>
-                ${log.repair_id}
-            </td>
-
-            <td>
-                ${log.asset_id}
-            </td>
-
-            <td>
-                ${log.issue_description}
-            </td>
-
-            <td>
-                ${log.sent_at}
-            </td>
-
-            <td>
-                ${log.returned_at ?? "-"}
-            </td>
-
-        </tr>
-
-        `;
-    });
-}
-
-
-// LOGOUT
-
-function logout() {
-
-    localStorage.removeItem(
-        "token"
-    );
-
-    window.location.href =
-        "login.html";
-}
-

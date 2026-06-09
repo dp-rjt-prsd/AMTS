@@ -5,160 +5,348 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Asset Details</title>
+    <title>
+        Asset Details
+    </title>
 
-    <link rel="stylesheet"
-          href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
 <body>
 
-<header class="navbar">
+<div class="app-layout">
 
-    <h2>Asset Management System</h2>
+    <!-- SIDEBAR -->
 
-    <div>
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
 
-        <button onclick="window.location.href='dashboard.html'">
-            Dashboard
-        </button>
+        <div class="sidebar-header">
+            AMS
+        </div>
 
-        <button onclick="window.location.href='assets.html'">
-            Assets
-        </button>
+        <div class="sidebar-user">
 
-        <button onclick="logout()">
-            Logout
-        </button>
+            <div id="sidebarUserName">
+                User
+            </div>
+
+            <small id="sidebarUserRole">
+                Employee
+            </small>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="dashboard.html">
+                Dashboard
+            </a>
+
+            <a
+                href="assets.html"
+                class="active"
+            >
+                Assets
+            </a>
+
+            <a href="transfers.html">
+                Transfers
+            </a>
+
+            <a href="repairs.html">
+                Repairs
+            </a>
+
+            <a
+                href="users.html"
+                class="admin-only"
+            >
+                Users
+            </a>
+
+            <a
+                href="#"
+                class="logout"
+                onclick="logout()"
+            >
+                Logout
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <!-- MAIN -->
+
+    <div class="main-area">
+
+        <header class="topbar">
+
+            <div
+                class="menu-toggle"
+                onclick="toggleSidebar()"
+            >
+                ☰
+            </div>
+
+            <h2>
+                Asset Details
+            </h2>
+
+            <button
+                onclick="window.location.href='assets.html'"
+            >
+                Back
+            </button>
+
+        </header>
+
+        <main class="page-content">
+
+            <!-- ASSET SUMMARY -->
+
+            <section
+                class="card"
+                style="margin-bottom:24px;"
+            >
+
+                <h2
+                    id="assetName"
+                    style="margin-bottom:12px;"
+                >
+                    Loading...
+                </h2>
+
+                <p
+                    style="
+                        color:var(--muted);
+                        margin-bottom:24px;
+                    "
+                >
+                    Asset ID:
+                    <strong id="assetId">
+                        -
+                    </strong>
+                </p>
+
+                <div
+                    style="
+                        display:grid;
+                        grid-template-columns:
+                        repeat(auto-fit,minmax(220px,1fr));
+                        gap:20px;
+                    "
+                >
+
+                    <div>
+
+                        <h4>Status</h4>
+
+                        <div
+                            id="assetStatus"
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+                    <div>
+
+                        <h4>Current Holder</h4>
+
+                        <p
+                            id="currentHolder"
+                        >
+                            -
+                        </p>
+
+                    </div>
+
+                    <div>
+
+                        <h4>Asset Type</h4>
+
+                        <p
+                            id="assetType"
+                        >
+                            -
+                        </p>
+
+                    </div>
+
+                    <div>
+
+                        <h4>Serial Number</h4>
+
+                        <p
+                            id="serialNumber"
+                        >
+                            -
+                        </p>
+
+                    </div>
+
+                    <div>
+
+                        <h4>Price</h4>
+
+                        <p
+                            id="price"
+                        >
+                            -
+                        </p>
+
+                    </div>
+
+                    <div>
+
+                        <h4>Remarks</h4>
+
+                        <p
+                            id="remarks"
+                        >
+                            -
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- TRANSFER HISTORY -->
+
+            <section
+                style="margin-bottom:24px;"
+            >
+
+                <h2
+                    style="
+                        margin-bottom:16px;
+                    "
+                >
+                    Transfer History
+                </h2>
+
+                <div
+                    class="table-wrapper"
+                >
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                Transfer ID
+                            </th>
+
+                            <th>
+                                From User
+                            </th>
+
+                            <th>
+                                To User
+                            </th>
+
+                            <th>
+                                Remarks
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="transferHistory"
+                        >
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+            <!-- REPAIR HISTORY -->
+
+            <section>
+
+                <h2
+                    style="
+                        margin-bottom:16px;
+                    "
+                >
+                    Repair History
+                </h2>
+
+                <div
+                    class="table-wrapper"
+                >
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                Repair ID
+                            </th>
+
+                            <th>
+                                Issue
+                            </th>
+
+                            <th>
+                                Sent At
+                            </th>
+
+                            <th>
+                                Returned At
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="repairHistory"
+                        >
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
 
     </div>
 
-</header>
+</div>
 
-<main>
-
-    <h1>Asset Details</h1>
-
-    <!-- ASSET INFO -->
-
-    <section class="card">
-
-        <h2>Asset Information</h2>
-
-        <table>
-
-            <tbody>
-
-            <tr>
-                <td>Asset ID</td>
-                <td id="assetId"></td>
-            </tr>
-
-            <tr>
-                <td>Asset Name</td>
-                <td id="assetName"></td>
-            </tr>
-
-            <tr>
-                <td>Status</td>
-                <td id="assetStatus"></td>
-            </tr>
-
-            <tr>
-                <td>Current Holder</td>
-                <td id="currentHolder"></td>
-            </tr>
-
-            <tr>
-                <td>Serial Number</td>
-                <td id="serialNumber"></td>
-            </tr>
-
-            <tr>
-                <td>Price</td>
-                <td id="price"></td>
-            </tr>
-
-            <tr>
-                <td>Remarks</td>
-                <td id="remarks"></td>
-            </tr>
-
-            </tbody>
-
-        </table>
-
-    </section>
-
-    <br>
-
-    <!-- TRANSFER HISTORY -->
-
-    <section>
-
-        <h2>Transfer History</h2>
-
-        <table>
-
-            <thead>
-
-            <tr>
-
-                <th>ID</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Remarks</th>
-                <th>Date</th>
-
-            </tr>
-
-            </thead>
-
-            <tbody id="transferHistory">
-
-            </tbody>
-
-        </table>
-
-    </section>
-
-    <br>
-
-    <!-- REPAIR HISTORY -->
-
-    <section>
-
-        <h2>Repair History</h2>
-
-        <table>
-
-            <thead>
-
-            <tr>
-
-                <th>Repair ID</th>
-                <th>Issue</th>
-                <th>Sent</th>
-                <th>Returned</th>
-
-            </tr>
-
-            </thead>
-
-            <tbody id="repairHistory">
-
-            </tbody>
-
-        </table>
-
-    </section>
-
-</main>
-
+<script src="js/utils.js"></script>
 <script src="js/asset_details.js"></script>
 
 </body>

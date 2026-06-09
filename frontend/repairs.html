@@ -1,143 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Repair Management</title>
+    <title>
+        Repair Management
+    </title>
 
-    <link rel="stylesheet"
-          href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
+
 <body>
 
-<header class="navbar">
+<div class="app-layout">
 
-    <h2>Asset Management System</h2>
+    <!-- SIDEBAR -->
 
-    <div>
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
 
-        <button onclick="window.location.href='dashboard.html'">
-            Dashboard
-        </button>
+        <div class="sidebar-header">
+            AMS
+        </div>
 
-        <button onclick="window.location.href='assets.html'">
-            Assets
-        </button>
+        <div class="sidebar-user">
 
-        <button onclick="window.location.href='transfers.html'">
-            Transfers
-        </button>
+            <div id="sidebarUserName">
+                User
+            </div>
 
-        <button onclick="logout()">
-            Logout
-        </button>
+            <small id="sidebarUserRole">
+                Employee
+            </small>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="dashboard.html">
+                Dashboard
+            </a>
+
+            <a href="assets.html">
+                Assets
+            </a>
+
+            <a href="transfers.html">
+                Transfers
+            </a>
+
+            <a
+                href="repairs.html"
+                class="active"
+            >
+                Repairs
+            </a>
+
+            <a
+                href="users.html"
+                class="admin-only"
+            >
+                Users
+            </a>
+
+            <a
+                href="#"
+                class="logout"
+                onclick="logout()"
+            >
+                Logout
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <!-- MAIN -->
+
+    <div class="main-area">
+
+        <header class="topbar">
+
+            <div
+                class="menu-toggle"
+                onclick="toggleSidebar()"
+            >
+                ☰
+            </div>
+
+            <h2>
+                Repair Management
+            </h2>
+
+            <button
+                onclick="loadRepairLogs()"
+            >
+                Refresh
+            </button>
+
+        </header>
+
+        <main class="page-content">
+
+            <h1 class="page-title">
+                Repairs
+            </h1>
+
+            <!-- SEND FOR REPAIR -->
+
+            <section class="asset-form">
+
+                <h2>
+                    Send Asset For Repair
+                </h2>
+
+                <form id="repairForm">
+
+                    <input
+                        type="text"
+                        id="repair_asset_id"
+                        placeholder="Asset ID"
+                        required
+                    >
+
+                    <textarea
+                        id="issue_description"
+                        placeholder="Describe the issue"
+                        required
+                    ></textarea>
+
+                    <button
+                        type="submit"
+                    >
+                        Send For Repair
+                    </button>
+
+                </form>
+
+            </section>
+
+            <!-- RETURN REPAIR -->
+
+            <section class="asset-form">
+
+                <h2>
+                    Return Asset From Repair
+                </h2>
+
+                <form id="returnRepairForm">
+
+                    <input
+                        type="number"
+                        id="repair_id"
+                        placeholder="Repair ID"
+                        required
+                    >
+
+                    <button
+                        type="submit"
+                    >
+                        Return Asset
+                    </button>
+
+                </form>
+
+            </section>
+
+            <!-- SEARCH -->
+
+            <div class="toolbar">
+
+                <input
+                    type="text"
+                    id="searchBox"
+                    placeholder="Search Asset ID or Repair ID..."
+                >
+
+            </div>
+
+            <!-- TABLE -->
+
+            <section>
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                Repair ID
+                            </th>
+
+                            <th>
+                                Asset ID
+                            </th>
+
+                            <th>
+                                Issue Description
+                            </th>
+
+                            <th>
+                                Sent At
+                            </th>
+
+                            <th>
+                                Returned At
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="repairTable"
+                        >
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
 
     </div>
 
-</header>
+</div>
 
-<main>
-
-    <h1>Repair Management</h1>
-
-    <!-- SEND TO REPAIR -->
-
-    <section class="asset-form">
-
-        <h2>Send Asset For Repair</h2>
-
-        <form id="repairForm">
-
-            <input
-                type="text"
-                id="repair_asset_id"
-                placeholder="Asset ID"
-                required
-            >
-
-            <textarea
-                id="issue_description"
-                placeholder="Issue Description"
-                required
-            ></textarea>
-
-            <button type="submit">
-                Send For Repair
-            </button>
-
-        </form>
-
-    </section>
-
-    <!-- RETURN FROM REPAIR -->
-
-    <section class="asset-form">
-
-        <h2>Return Asset From Repair</h2>
-
-        <form id="returnRepairForm">
-
-            <input
-                type="number"
-                id="repair_id"
-                placeholder="Repair ID"
-                required
-            >
-
-            <button type="submit">
-                Return Asset
-            </button>
-
-        </form>
-
-    </section>
-
-    <!-- REPAIR HISTORY -->
-
-    <section>
-
-        <h2>Repair History</h2>
-
-        <button onclick="loadRepairLogs()">
-            Refresh
-        </button>
-
-        <table>
-
-            <thead>
-
-            <tr>
-
-                <th>Repair ID</th>
-
-                <th>Asset ID</th>
-
-                <th>Issue</th>
-
-                <th>Sent At</th>
-
-                <th>Returned At</th>
-
-            </tr>
-
-            </thead>
-
-            <tbody id="repairTable">
-
-            </tbody>
-
-        </table>
-
-    </section>
-
-</main>
-
+<script src="js/utils.js"></script>
 <script src="js/repairs.js"></script>
 
 </body>
+
 </html>

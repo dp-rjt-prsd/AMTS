@@ -2,105 +2,281 @@ const API_BASE_URL =
     "http://127.0.0.1:8000";
 
 const token =
-    localStorage.getItem("token");
-
-if (!token) {
-
-    window.location.href =
-        "login.html";
-}
-
-loadAssets();
-
-document
-    .getElementById("assetForm")
-    .addEventListener(
-        "submit",
-        createAsset
-    );
-
-document
-    .getElementById("searchBox")
-    .addEventListener(
-        "keyup",
-        filterAssets
-    );
+    requireAuth();
 
 let allAssets = [];
 
-async function loadAssets() {
+// ======================================
+// INIT
+// ======================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        applyRoleRules();
+
+        loadCurrentUser();
+
+        loadAssets();
+
+        loadDropdowns();
+
+        document
+            .getElementById(
+                "assetForm"
+            )
+            .addEventListener(
+                "submit",
+                createAsset
+            );
+
+        document
+            .getElementById(
+                "searchBox"
+            )
+            .addEventListener(
+                "keyup",
+                debounce(
+                    filterAssets,
+                    300
+                )
+            );
+    }
+);
+
+// ======================================
+// LOAD DROPDOWNS
+// ======================================
+
+async function loadDropdowns() {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_BASE_URL}/assets`,
-                {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
-                }
-            );
+        const [
+            types,
+            statuses,
+            users
+        ] = await Promise.all([
 
-        allAssets =
-            await response.json();
+            fetchData(
+                "/asset-types"
+            ),
 
-        renderAssets(allAssets);
+            fetchData(
+                "/statuses"
+            ),
+
+            fetchData(
+                "/users"
+            )
+        ]);
+
+        populateSelect(
+            "asset_type_id",
+            types,
+            "asset_type_id",
+            "asset_type_name"
+        );
+
+        populateSelect(
+            "status_id",
+            statuses,
+            "status_id",
+            "status_name"
+        );
+
+        populateSelect(
+            "current_holder_id",
+            users,
+            "user_id",
+            "name",
+            true
+        );
 
     }
     catch (error) {
 
         console.error(error);
+
+        showToast(
+            "Failed loading dropdowns",
+            "error"
+        );
     }
 }
 
-function renderAssets(assets) {
+function populateSelect(
+    id,
+    data,
+    valueField,
+    labelField,
+    keepFirst = false
+) {
+
+    const select =
+        document.getElementById(
+            id
+        );
+
+    const first =
+        keepFirst
+            ? select.innerHTML
+            : "";
+
+    select.innerHTML =
+        first;
+
+    data.forEach(item => {
+
+        select.innerHTML += `
+
+        <option
+            value="${item[valueField]}"
+        >
+
+            ${item[labelField]}
+
+        </option>
+
+        `;
+    });
+}
+
+// ======================================
+// LOAD ASSETS
+// ======================================
+
+async function loadAssets() {
 
     const table =
         document.getElementById(
             "assetTable"
         );
 
-    table.innerHTML = "";
+    showTableLoader(
+        table,
+        6
+    );
 
-    assets.forEach(asset => {
+    try {
 
-        table.innerHTML += `
+        allAssets =
+            await fetchData(
+                "/assets"
+            );
+
+        renderAssets(
+            allAssets
+        );
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        table.innerHTML =
+            emptyTableRow(
+                6,
+                "Unable to load assets"
+            );
+
+        showToast(
+            "Unable to load assets",
+            "error"
+        );
+    }
+}
+
+// ======================================
+// RENDER ASSETS
+// ======================================
+
+function renderAssets(
+    assets
+) {
+
+    const table =
+        document.getElementById(
+            "assetTable"
+        );
+
+    if (
+        !assets ||
+        assets.length === 0
+    ) {
+
+        table.innerHTML =
+            emptyTableRow(
+                6,
+                "No assets found"
+            );
+
+        return;
+    }
+
+    table.innerHTML =
+        assets.map(asset => `
 
         <tr>
 
             <td>
 
-<a href="asset_details.html?asset_id=${asset.asset_id}">
+                <a href="asset_details.html?asset_id=${asset.asset_id}">
 
-${asset.asset_id}
+                    ${asset.asset_id}
 
-</a>
+                </a>
 
-</td>
-
-            <td>${asset.asset_name}</td>
-
-            <td>${asset.status_id}</td>
-
-            <td>
-                ${asset.current_holder_id ?? "-"}
             </td>
 
             <td>
-                ${asset.serial_number ?? "-"}
+
+                ${asset.asset_name}
+
             </td>
 
             <td>
+
+                ${getStatusBadge(
+                    asset.status_name
+                )}
+
+            </td>
+
+            <td>
+
+                ${
+                    asset.holder_name
+                    ?? "-"
+                }
+
+            </td>
+
+            <td>
+
+                ${
+                    asset.serial_number
+                    ?? "-"
+                }
+
+            </td>
+
+            <td>
+
                 ₹${asset.price ?? 0}
+
             </td>
 
         </tr>
 
-        `;
-    });
+        `
+        ).join("");
 }
+
+// ======================================
+// SEARCH
+// ======================================
 
 function filterAssets() {
 
@@ -114,19 +290,30 @@ function filterAssets() {
 
     const filtered =
         allAssets.filter(asset =>
+
             asset.asset_id
                 .toLowerCase()
                 .includes(search)
+
             ||
+
             asset.asset_name
                 .toLowerCase()
                 .includes(search)
         );
 
-    renderAssets(filtered);
+    renderAssets(
+        filtered
+    );
 }
 
-async function createAsset(event) {
+// ======================================
+// CREATE ASSET
+// ======================================
+
+async function createAsset(
+    event
+) {
 
     event.preventDefault();
 
@@ -137,6 +324,11 @@ async function createAsset(event) {
                 "asset_id"
             ).value,
 
+        asset_name:
+            document.getElementById(
+                "asset_name"
+            ).value,
+
         procurement_by:
             document.getElementById(
                 "procurement_by"
@@ -145,11 +337,6 @@ async function createAsset(event) {
         purchase_order_id:
             document.getElementById(
                 "purchase_order_id"
-            ).value,
-
-        asset_name:
-            document.getElementById(
-                "asset_name"
             ).value,
 
         asset_type_id:
@@ -174,7 +361,7 @@ async function createAsset(event) {
                     document.getElementById(
                         "current_holder_id"
                     ).value
-                  )
+                )
                 : null,
 
         serial_number:
@@ -186,7 +373,7 @@ async function createAsset(event) {
             parseFloat(
                 document.getElementById(
                     "price"
-                ).value
+                ).value || 0
             ),
 
         remarks:
@@ -219,41 +406,69 @@ async function createAsset(event) {
                 }
             );
 
-        if (response.ok) {
+        const data =
+            await response.json();
 
-            alert(
-                "Asset Created"
+        if (!response.ok) {
+
+            showToast(
+                data.detail ||
+                "Asset creation failed",
+                "error"
             );
 
-            document
-                .getElementById(
-                    "assetForm"
-                )
-                .reset();
-
-            loadAssets();
+            return;
         }
-        else {
 
-            const data =
-                await response.json();
+        showToast(
+            "Asset created successfully"
+        );
 
-            alert(data.detail);
-        }
+        document
+            .getElementById(
+                "assetForm"
+            )
+            .reset();
+
+        loadAssets();
 
     }
     catch (error) {
 
         console.error(error);
+
+        showToast(
+            "Unable to create asset",
+            "error"
+        );
     }
 }
 
-function logout() {
+// ======================================
+// HELPER
+// ======================================
 
-    localStorage.removeItem(
-        "token"
-    );
+async function fetchData(
+    endpoint
+) {
 
-    window.location.href =
-        "login.html";
+    const response =
+        await fetch(
+            `${API_BASE_URL}${endpoint}`,
+            {
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+            }
+        );
+
+    if (!response.ok) {
+
+        throw new Error(
+            "Request failed"
+        );
+    }
+
+    return response.json();
 }

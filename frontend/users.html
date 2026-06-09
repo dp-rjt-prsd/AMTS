@@ -1,167 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>User Management</title>
 
-    <link rel="stylesheet"
-          href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
 </head>
 
 <body>
 
-<header class="navbar">
+<div class="app-layout">
 
-    <h2>Asset Management System</h2>
+    <!-- SIDEBAR -->
 
-    <div>
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
 
-        <button onclick="window.location.href='dashboard.html'">
-            Dashboard
-        </button>
+        <div class="sidebar-header">
+            AMS
+        </div>
 
-        <button onclick="window.location.href='assets.html'">
-            Assets
-        </button>
+        <nav class="sidebar-nav">
 
-        <button onclick="window.location.href='transfers.html'">
-            Transfers
-        </button>
+            <a href="dashboard.html">
+                Dashboard
+            </a>
 
-        <button onclick="window.location.href='repairs.html'">
-            Repairs
-        </button>
+            <a href="assets.html">
+                Assets
+            </a>
 
-        <button onclick="logout()">
-            Logout
-        </button>
+            <a href="transfers.html">
+                Transfers
+            </a>
 
-    </div>
+            <a href="repairs.html">
+                Repairs
+            </a>
 
-</header>
-
-<main>
-
-    <h1>User Management</h1>
-
-    <section class="asset-form">
-
-        <h2>Create User</h2>
-
-        <form id="userForm">
-
-            <input
-                type="text"
-                id="emp_id"
-                placeholder="Employee ID"
-                required
+            <a
+                href="users.html"
+                class="active"
             >
+                Users
+            </a>
 
-            <input
-                type="text"
-                id="name"
-                placeholder="Name"
-                required
+            <a
+                href="#"
+                class="logout"
+                onclick="logout()"
             >
+                Logout
+            </a>
 
-            <input
-                type="email"
-                id="email"
-                placeholder="Email"
-                required
+        </nav>
+
+    </aside>
+
+    <!-- MAIN -->
+
+    <div class="main-area">
+
+        <header class="topbar">
+
+            <div
+                class="menu-toggle"
+                onclick="toggleSidebar()"
             >
+                ☰
+            </div>
 
-            <input
-                type="password"
-                id="password"
-                placeholder="Password"
-                required
+            <h2>
+                User Management
+            </h2>
+
+            <button
+                onclick="loadUsers()"
             >
-
-            <select id="role">
-
-                <option value="EMPLOYEE">
-                    Employee
-                </option>
-
-                <option value="ADMIN">
-                    Admin
-                </option>
-
-            </select>
-
-            <input
-                type="number"
-                id="dept_id"
-                placeholder="Department ID"
-                required
-            >
-
-            <button type="submit">
-                Create User
-            </button>
-
-        </form>
-
-    </section>
-
-    <section>
-
-        <div class="toolbar">
-
-            <input
-                type="text"
-                id="searchBox"
-                placeholder="Search User..."
-            >
-
-            <button onclick="loadUsers()">
                 Refresh
             </button>
 
-        </div>
+        </header>
 
-        <table>
+        <main class="page-content">
 
-            <thead>
+            <h1 class="page-title">
+                Users
+            </h1>
 
-            <tr>
+            <!-- CREATE USER -->
 
-                <th>User ID</th>
+            <section class="asset-form">
 
-                <th>Emp ID</th>
+                <h2>
+                    Create User
+                </h2>
 
-                <th>Name</th>
+                <form id="userForm">
 
-                <th>Email</th>
+                    <input
+                        type="text"
+                        id="emp_id"
+                        placeholder="Employee ID"
+                        required
+                    >
 
-                <th>Role</th>
+                    <input
+                        type="text"
+                        id="name"
+                        placeholder="Full Name"
+                        required
+                    >
 
-                <th>Department</th>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Email Address"
+                        required
+                    >
 
-                <th>Created</th>
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Password"
+                        required
+                    >
 
-            </tr>
+                    <select
+                        id="role"
+                        required
+                    >
 
-            </thead>
+                        <option value="EMPLOYEE">
+                            Employee
+                        </option>
 
-            <tbody id="userTable">
+                        <option value="ADMIN">
+                            Admin
+                        </option>
 
-            </tbody>
+                    </select>
 
-        </table>
+                    <input
+                        type="number"
+                        id="dept_id"
+                        placeholder="Department ID"
+                        required
+                    >
 
-    </section>
+                    <button
+                        type="submit"
+                    >
+                        Create User
+                    </button>
 
-</main>
+                </form>
+
+            </section>
+
+            <!-- SEARCH -->
+
+            <div class="toolbar">
+
+                <input
+                    type="text"
+                    id="searchBox"
+                    placeholder="Search User..."
+                >
+
+            </div>
+
+            <!-- USER TABLE -->
+
+            <section>
+
+                <h2
+                    style="margin-bottom:16px;"
+                >
+                    User Directory
+                </h2>
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                User ID
+                            </th>
+
+                            <th>
+                                Employee ID
+                            </th>
+
+                            <th>
+                                Name
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Role
+                            </th>
+
+                            <th>
+                                Department
+                            </th>
+
+                            <th>
+                                Created
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="userTable"
+                        >
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
 
 <script src="js/users.js"></script>
 
 </body>
+
 </html>

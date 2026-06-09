@@ -2,40 +2,62 @@ const API_BASE_URL =
     "http://127.0.0.1:8000";
 
 const token =
-    localStorage.getItem("token");
-
-if (!token) {
-
-    window.location.href =
-        "login.html";
-}
+    requireAuth();
 
 let allUsers = [];
 
-loadUsers();
+// ======================================
+// INIT
+// ======================================
 
-document
-    .getElementById(
-        "userForm"
-    )
-    .addEventListener(
-        "submit",
-        createUser
-    );
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-document
-    .getElementById(
-        "searchBox"
-    )
-    .addEventListener(
-        "keyup",
-        filterUsers
-    );
+        applyRoleRules();
 
+        loadCurrentUser();
 
+        loadUsers();
+
+        document
+            .getElementById(
+                "userForm"
+            )
+            .addEventListener(
+                "submit",
+                createUser
+            );
+
+        document
+            .getElementById(
+                "searchBox"
+            )
+            .addEventListener(
+                "keyup",
+                debounce(
+                    filterUsers,
+                    300
+                )
+            );
+    }
+);
+
+// ======================================
 // LOAD USERS
+// ======================================
 
 async function loadUsers() {
+
+    const table =
+        document.getElementById(
+            "userTable"
+        );
+
+    showTableLoader(
+        table,
+        7
+    );
 
     try {
 
@@ -50,58 +72,115 @@ async function loadUsers() {
                 }
             );
 
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed to load users"
+            );
+        }
+
         allUsers =
             await response.json();
 
-        renderUsers(allUsers);
-
+        renderUsers(
+            allUsers
+        );
     }
     catch (error) {
 
         console.error(error);
+
+        table.innerHTML =
+            emptyTableRow(
+                7,
+                "Unable to load users"
+            );
+
+        showToast(
+            "Unable to load users",
+            "error"
+        );
     }
 }
 
-
+// ======================================
 // RENDER USERS
+// ======================================
 
-function renderUsers(users) {
+function renderUsers(
+    users
+) {
 
     const table =
         document.getElementById(
             "userTable"
         );
 
-    table.innerHTML = "";
+    if (
+        !users ||
+        users.length === 0
+    ) {
 
-    users.forEach(user => {
+        table.innerHTML =
+            emptyTableRow(
+                7,
+                "No users found"
+            );
 
-        table.innerHTML += `
+        return;
+    }
+
+    table.innerHTML =
+        users.map(
+            user => `
 
         <tr>
 
-            <td>${user.user_id}</td>
+            <td>
+                ${user.user_id}
+            </td>
 
-            <td>${user.emp_id}</td>
+            <td>
+                ${user.emp_id}
+            </td>
 
-            <td>${user.name}</td>
+            <td>
+                ${user.name}
+            </td>
 
-            <td>${user.email}</td>
+            <td>
+                ${user.email}
+            </td>
 
-            <td>${user.role}</td>
+            <td>
 
-            <td>${user.dept_id}</td>
+                <span class="badge badge-primary">
 
-            <td>${user.created_at}</td>
+                    ${user.role}
+
+                </span>
+
+            </td>
+
+            <td>
+                ${user.dept_id}
+            </td>
+
+            <td>
+                ${formatDate(
+                    user.created_at
+                )}
+            </td>
 
         </tr>
 
-        `;
-    });
+        `
+        ).join("");
 }
 
-
-// SEARCH USERS
+// ======================================
+// SEARCH
+// ======================================
 
 function filterUsers() {
 
@@ -114,30 +193,34 @@ function filterUsers() {
             .toLowerCase();
 
     const filtered =
-        allUsers.filter(user =>
+        allUsers.filter(
+            user =>
 
-            user.name
-                .toLowerCase()
-                .includes(search)
+                user.name
+                    .toLowerCase()
+                    .includes(search)
 
-            ||
+                ||
 
-            user.email
-                .toLowerCase()
-                .includes(search)
+                user.email
+                    .toLowerCase()
+                    .includes(search)
 
-            ||
+                ||
 
-            user.emp_id
-                .toLowerCase()
-                .includes(search)
+                user.emp_id
+                    .toLowerCase()
+                    .includes(search)
         );
 
-    renderUsers(filtered);
+    renderUsers(
+        filtered
+    );
 }
 
-
+// ======================================
 // CREATE USER
+// ======================================
 
 async function createUser(
     event
@@ -148,35 +231,47 @@ async function createUser(
     const payload = {
 
         emp_id:
-            document.getElementById(
-                "emp_id"
-            ).value,
+            document
+                .getElementById(
+                    "emp_id"
+                )
+                .value,
 
         name:
-            document.getElementById(
-                "name"
-            ).value,
+            document
+                .getElementById(
+                    "name"
+                )
+                .value,
 
         email:
-            document.getElementById(
-                "email"
-            ).value,
+            document
+                .getElementById(
+                    "email"
+                )
+                .value,
 
         password:
-            document.getElementById(
-                "password"
-            ).value,
+            document
+                .getElementById(
+                    "password"
+                )
+                .value,
 
         role:
-            document.getElementById(
-                "role"
-            ).value,
+            document
+                .getElementById(
+                    "role"
+                )
+                .value,
 
         dept_id:
             parseInt(
-                document.getElementById(
-                    "dept_id"
-                ).value
+                document
+                    .getElementById(
+                        "dept_id"
+                    )
+                    .value
             )
     };
 
@@ -207,43 +302,65 @@ async function createUser(
         const data =
             await response.json();
 
-        if (response.ok) {
+        if (!response.ok) {
 
-            alert(
-                "User Created"
+            showToast(
+                data.detail ||
+                "User creation failed",
+                "error"
             );
 
-            document
-                .getElementById(
-                    "userForm"
-                )
-                .reset();
-
-            loadUsers();
-        }
-        else {
-
-            alert(
-                data.detail
-            );
+            return;
         }
 
+        showToast(
+            "User created successfully"
+        );
+
+        document
+            .getElementById(
+                "userForm"
+            )
+            .reset();
+
+        loadUsers();
     }
     catch (error) {
 
         console.error(error);
+
+        showToast(
+            "Unable to create user",
+            "error"
+        );
     }
 }
 
+// ======================================
+// ADMIN PROTECTION
+// ======================================
 
-// LOGOUT
-
-function logout() {
-
-    localStorage.removeItem(
-        "token"
+const role =
+    localStorage.getItem(
+        "role"
     );
 
-    window.location.href =
-        "login.html";
+if (
+    role !== "ADMIN"
+) {
+
+    showToast(
+        "Access denied",
+        "error"
+    );
+
+    setTimeout(
+        () => {
+
+            window.location.href =
+                "dashboard.html";
+
+        },
+        500
+    );
 }

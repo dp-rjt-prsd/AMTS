@@ -2,26 +2,125 @@ const API_BASE_URL =
     "http://127.0.0.1:8000";
 
 const token =
-    localStorage.getItem("token");
+    requireAuth();
 
-if (!token) {
+let allTransfers = [];
 
-    window.location.href =
-        "login.html";
+// ======================================
+// INIT
+// ======================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        applyRoleRules();
+
+        loadCurrentUser();
+
+        loadUsers();
+
+        loadTransfers();
+
+        document
+            .getElementById(
+                "transferForm"
+            )
+            .addEventListener(
+                "submit",
+                transferAsset
+            );
+
+        document
+            .getElementById(
+                "searchBox"
+            )
+            .addEventListener(
+                "keyup",
+                debounce(
+                    filterTransfers,
+                    300
+                )
+            );
+    }
+);
+
+// ======================================
+// LOAD USERS
+// ======================================
+
+async function loadUsers() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/users`,
+                {
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                }
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed loading users"
+            );
+        }
+
+        const users =
+            await response.json();
+
+        const select =
+            document.getElementById(
+                "to_user_id"
+            );
+
+        users.forEach(user => {
+
+            select.innerHTML += `
+
+            <option
+                value="${user.user_id}"
+            >
+
+                ${user.name}
+
+            </option>
+
+            `;
+        });
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        showToast(
+            "Unable to load users",
+            "error"
+        );
+    }
 }
 
-loadTransfers();
-
-document
-    .getElementById(
-        "transferForm"
-    )
-    .addEventListener(
-        "submit",
-        transferAsset
-    );
+// ======================================
+// LOAD TRANSFERS
+// ======================================
 
 async function loadTransfers() {
+
+    const table =
+        document.getElementById(
+            "transferTable"
+        );
+
+    showTableLoader(
+        table,
+        6
+    );
 
     try {
 
@@ -36,19 +135,40 @@ async function loadTransfers() {
                 }
             );
 
-        const transfers =
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed loading transfers"
+            );
+        }
+
+        allTransfers =
             await response.json();
 
         renderTransfers(
-            transfers
+            allTransfers
         );
-
     }
     catch (error) {
 
         console.error(error);
+
+        table.innerHTML =
+            emptyTableRow(
+                6,
+                "Unable to load transfers"
+            );
+
+        showToast(
+            "Unable to load transfers",
+            "error"
+        );
     }
 }
+
+// ======================================
+// RENDER
+// ======================================
 
 function renderTransfers(
     transfers
@@ -59,45 +179,116 @@ function renderTransfers(
             "transferTable"
         );
 
-    table.innerHTML = "";
+    if (
+        !transfers ||
+        transfers.length === 0
+    ) {
 
-    transfers.forEach(
-        transfer => {
+        table.innerHTML =
+            emptyTableRow(
+                6,
+                "No transfer records found"
+            );
 
-            table.innerHTML += `
+        return;
+    }
 
-            <tr>
+    table.innerHTML =
+        transfers.map(
+            transfer => `
 
-                <td>
-                    ${transfer.transfer_id}
-                </td>
+        <tr>
 
-                <td>
-                    ${transfer.asset_id}
-                </td>
+            <td>
+                ${transfer.transfer_id}
+            </td>
 
-                <td>
-                    ${transfer.from_user_id ?? "-"}
-                </td>
+            <td>
+                ${transfer.asset_id}
+            </td>
 
-                <td>
-                    ${transfer.to_user_id ?? "-"}
-                </td>
+            <td>
+                ${
+                    transfer.from_user_name
+                    ?? "-"
+                }
+            </td>
 
-                <td>
-                    ${transfer.remarks ?? ""}
-                </td>
+            <td>
+                ${
+                    transfer.to_user_name
+                    ?? "-"
+                }
+            </td>
 
-                <td>
-                    ${transfer.transferred_at}
-                </td>
+            <td>
+                ${
+                    transfer.remarks
+                    ?? "-"
+                }
+            </td>
 
-            </tr>
+            <td>
+                ${formatDate(
+                    transfer.transferred_at
+                )}
+            </td>
 
-            `;
-        }
+        </tr>
+
+        `
+        ).join("");
+}
+
+// ======================================
+// SEARCH
+// ======================================
+
+function filterTransfers() {
+
+    const search =
+        document
+            .getElementById(
+                "searchBox"
+            )
+            .value
+            .toLowerCase();
+
+    const filtered =
+        allTransfers.filter(
+            transfer =>
+
+                transfer.asset_id
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                (
+                    transfer.to_user_name
+                    ?? ""
+                )
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                (
+                    transfer.from_user_name
+                    ?? ""
+                )
+                    .toLowerCase()
+                    .includes(search)
+        );
+
+    renderTransfers(
+        filtered
     );
 }
+
+// ======================================
+// TRANSFER ASSET
+// ======================================
 
 async function transferAsset(
     event
@@ -108,21 +299,27 @@ async function transferAsset(
     const payload = {
 
         asset_id:
-            document.getElementById(
-                "asset_id"
-            ).value,
+            document
+                .getElementById(
+                    "asset_id"
+                )
+                .value,
 
         to_user_id:
             parseInt(
-                document.getElementById(
-                    "to_user_id"
-                ).value
+                document
+                    .getElementById(
+                        "to_user_id"
+                    )
+                    .value
             ),
 
         remarks:
-            document.getElementById(
-                "remarks"
-            ).value
+            document
+                .getElementById(
+                    "remarks"
+                )
+                .value
     };
 
     try {
@@ -152,40 +349,37 @@ async function transferAsset(
         const data =
             await response.json();
 
-        if (response.ok) {
+        if (!response.ok) {
 
-            alert(
-                "Transfer Successful"
+            showToast(
+                data.detail ||
+                "Transfer failed",
+                "error"
             );
 
-            document
-                .getElementById(
-                    "transferForm"
-                )
-                .reset();
-
-            loadTransfers();
+            return;
         }
-        else {
 
-            alert(
-                data.detail
-            );
-        }
+        showToast(
+            "Asset transferred successfully"
+        );
+
+        document
+            .getElementById(
+                "transferForm"
+            )
+            .reset();
+
+        loadTransfers();
 
     }
     catch (error) {
 
         console.error(error);
+
+        showToast(
+            "Unable to transfer asset",
+            "error"
+        );
     }
-}
-
-function logout() {
-
-    localStorage.removeItem(
-        "token"
-    );
-
-    window.location.href =
-        "login.html";
 }

@@ -1,85 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMS Dashboard</title>
 
-    <link rel="stylesheet" href="css/style.css">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AMS Dashboard
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
+
 <body>
 
-    <header class="navbar">
+<div class="app-layout">
 
-        <h2>Asset Management System</h2>
+    <!-- SIDEBAR -->
 
-        <button onclick="logout()">
-            Logout
-        </button>
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
 
-    </header>
+        <div class="sidebar-header">
+            AMS
+        </div>
 
-    <main>
+        <div class="sidebar-user">
 
-        <h1>Dashboard</h1>
-
-        <div class="card-container">
-
-            <div class="card">
-                <h3>Total Assets</h3>
-                <p id="totalAssets">0</p>
+            <div id="sidebarUserName">
+                User
             </div>
 
-            <div class="card">
-                <h3>Total Users</h3>
-                <p id="totalUsers">0</p>
-            </div>
-
-            <div class="card">
-                <h3>Available Assets</h3>
-                <p id="availableAssets">0</p>
-            </div>
-
-            <div class="card">
-                <h3>Assigned Assets</h3>
-                <p id="assignedAssets">0</p>
-            </div>
-
-            <div class="card">
-                <h3>Repair Assets</h3>
-                <p id="repairAssets">0</p>
-            </div>
-
-            <div class="card">
-                <h3>Retired Assets</h3>
-                <p id="retiredAssets">0</p>
-            </div>
+            <small id="sidebarUserRole">
+                Employee
+            </small>
 
         </div>
 
-        <h2>Recent Transfers</h2>
+        <nav class="sidebar-nav">
 
-        <table>
+            <a
+                href="dashboard.html"
+                class="active"
+            >
+                Dashboard
+            </a>
 
-            <thead>
-                <tr>
-                    <th>Transfer ID</th>
-                    <th>Asset ID</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
+            <a href="assets.html">
+                Assets
+            </a>
 
-            <tbody id="transferTable">
+            <a href="transfers.html">
+                Transfers
+            </a>
 
-            </tbody>
+            <a href="repairs.html">
+                Repairs
+            </a>
 
-        </table>
+            <a
+                href="users.html"
+                class="admin-only"
+            >
+                Users
+            </a>
 
-    </main>
+            <a
+                href="#"
+                class="logout"
+                onclick="logout()"
+            >
+                Logout
+            </a>
 
-    <script src="js/dashboard.js"></script>
+        </nav>
+
+    </aside>
+
+    <!-- MAIN -->
+
+    <div class="main-area">
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div
+                class="menu-toggle"
+                onclick="toggleSidebar()"
+            >
+                ☰
+            </div>
+
+            <h2>
+                Dashboard
+            </h2>
+
+            <button
+                onclick="loadDashboard()"
+            >
+                Refresh
+            </button>
+
+        </header>
+
+        <!-- CONTENT -->
+
+        <main class="page-content">
+
+            <h1 class="page-title">
+                Dashboard Overview
+            </h1>
+
+            <!-- KPI CARDS -->
+
+            <div class="card-container">
+
+                <div class="card">
+
+                    <h3>
+                        Total Assets
+                    </h3>
+
+                    <p id="totalAssets">
+                        ...
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>
+                        Total Users
+                    </h3>
+
+                    <p id="totalUsers">
+                        ...
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>
+                        Available Assets
+                    </h3>
+
+                    <p id="availableAssets">
+                        ...
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>
+                        Assigned Assets
+                    </h3>
+
+                    <p id="assignedAssets">
+                        ...
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>
+                        Assets In Repair
+                    </h3>
+
+                    <p id="repairAssets">
+                        ...
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>
+                        Retired Assets
+                    </h3>
+
+                    <p id="retiredAssets">
+                        ...
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- CHART -->
+
+            <section
+                class="card"
+                style="margin-bottom:24px;"
+            >
+
+                <h2
+                    style="margin-bottom:20px;"
+                >
+                    Asset Status Distribution
+                </h2>
+
+                <canvas
+                    id="assetStatusChart"
+                ></canvas>
+
+            </section>
+
+            <!-- RECENT TRANSFERS -->
+
+            <section>
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        margin-bottom:16px;
+                    "
+                >
+
+                    <h2>
+                        Recent Transfers
+                    </h2>
+
+                </div>
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                Transfer ID
+                            </th>
+
+                            <th>
+                                Asset ID
+                            </th>
+
+                            <th>
+                                From User
+                            </th>
+
+                            <th>
+                                To User
+                            </th>
+
+                            <th>
+                                Timestamp
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="transferTable"
+                        >
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/dashboard.js"></script>
 
 </body>
+
 </html>
