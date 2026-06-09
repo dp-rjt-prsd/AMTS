@@ -1,8 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
 
-DATABASE_URL = "mysql+pymysql://root:PASSWORD@localhost/asset_management_system"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:PASSWORD@localhost/asset_management_system")
 
 engine = create_engine(DATABASE_URL)
 

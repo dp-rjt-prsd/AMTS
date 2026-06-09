@@ -6,7 +6,7 @@ from app.database import SessionLocal
 
 from app.models.asset import Asset
 
-from app.auth.auth_bearer import get_current_user
+from app.auth.auth_bearer import require_admin
 
 
 router = APIRouter()
@@ -28,15 +28,9 @@ def update_asset_status(
     asset_id: str,
     status_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
-
-    if current_user["role"] != "ADMIN":
-
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can update asset status"
-        )
+    """Update asset status - Admin only"""
 
     asset = db.query(Asset).filter(
         Asset.asset_id == asset_id

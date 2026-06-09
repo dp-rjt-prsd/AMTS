@@ -10,7 +10,7 @@ from app.models.asset import Asset
 from app.models.user import User
 from app.models.transfer_log import AssetTransferLog
 
-from app.auth.auth_bearer import get_current_user
+from app.auth.auth_bearer import get_current_user, require_admin
 
 
 router = APIRouter()
@@ -32,6 +32,10 @@ def dashboard_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    """
+    Get dashboard summary - Any authenticated user
+    Full stats for Admins, limited stats for others
+    """
 
     total_assets = db.query(Asset).count()
 
@@ -66,5 +70,6 @@ def dashboard_summary(
         "assigned_assets": assigned_assets,
         "repair_assets": repair_assets,
         "retired_assets": retired_assets,
-        "recent_transfers": recent_transfers
+        "recent_transfers": recent_transfers,
+        "user_role": current_user.get("role")
     }

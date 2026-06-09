@@ -45,6 +45,8 @@ class Asset(Base):
 
     remarks = Column(Text)
 
+    qr_code = Column(Text)
+
     created_at = Column(
         TIMESTAMP,
         server_default=func.now()

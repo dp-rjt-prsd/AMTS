@@ -1,9 +1,6 @@
 const API_BASE_URL =
     "http://127.0.0.1:8000";
 
-const token =
-    requireAuth();
-
 let allTransfers = [];
 
 // ======================================
@@ -14,6 +11,10 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
+        if (!requireAuth()) {
+            return;
+        }
+
         applyRoleRules();
 
         loadCurrentUser();
@@ -22,26 +23,15 @@ document.addEventListener(
 
         loadTransfers();
 
-        document
-            .getElementById(
-                "transferForm"
-            )
-            .addEventListener(
-                "submit",
-                transferAsset
-            );
+        const transferForm = document.getElementById("transferForm");
+        if (transferForm) {
+            transferForm.addEventListener("submit", transferAsset);
+        }
 
-        document
-            .getElementById(
-                "searchBox"
-            )
-            .addEventListener(
-                "keyup",
-                debounce(
-                    filterTransfers,
-                    300
-                )
-            );
+        const searchBox = document.getElementById("searchBox");
+        if (searchBox) {
+            searchBox.addEventListener("keyup", debounce(filterTransfers, 300));
+        }
     }
 );
 
@@ -57,14 +47,16 @@ async function loadUsers() {
             await fetch(
                 `${API_BASE_URL}/users`,
                 {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
 
         if (!response.ok) {
+
+            if (response.status === 401) {
+                logout();
+                throw new Error("Session expired");
+            }
 
             throw new Error(
                 "Failed loading users"
@@ -79,25 +71,28 @@ async function loadUsers() {
                 "to_user_id"
             );
 
-        users.forEach(user => {
+        if (select) {
 
-            select.innerHTML += `
+            users.forEach(user => {
 
-            <option
-                value="${user.user_id}"
-            >
+                select.innerHTML += `
 
-                ${user.name}
+                <option
+                    value="${user.user_id}"
+                >
 
-            </option>
+                    ${user.name}
 
-            `;
-        });
+                </option>
+
+                `;
+            });
+        }
 
     }
     catch (error) {
 
-        console.error(error);
+        console.error("Error loading users:", error);
 
         showToast(
             "Unable to load users",

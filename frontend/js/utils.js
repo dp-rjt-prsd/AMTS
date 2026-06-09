@@ -180,12 +180,30 @@ function applyRoleRules() {
                     item.remove()
             );
     }
+
+    if (
+        role !== "ADMIN" &&
+        role !== "DEPARTMENT_HEAD"
+    ) {
+
+        document
+            .querySelectorAll(
+                ".head-only"
+            )
+            .forEach(
+                item =>
+                    item.remove()
+            );
+    }
 }
 
 // ========================================
-// AUTH CHECK
+// AUTHENTICATION GUARDS
 // ========================================
 
+/**
+ * Require authentication - redirect to login if not authenticated
+ */
 function requireAuth() {
 
     const token =
@@ -197,9 +215,156 @@ function requireAuth() {
 
         window.location.href =
             "login.html";
+
+        return false;
     }
 
-    return token;
+    return true;
+}
+
+/**
+ * Require Admin role - redirect to dashboard if not admin
+ */
+function requireAdmin() {
+
+    const token =
+        localStorage.getItem(
+            "token"
+        );
+
+    const role =
+        localStorage.getItem(
+            "role"
+        );
+
+    if (!token) {
+
+        window.location.href =
+            "login.html";
+
+        return false;
+    }
+
+    if (role !== "ADMIN") {
+
+        showToast(
+            "Admin access required",
+            "error"
+        );
+
+        window.location.href =
+            "dashboard.html";
+
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Require Admin or Department Head - redirect if insufficient role
+ */
+function requireHead() {
+
+    const token =
+        localStorage.getItem(
+            "token"
+        );
+
+    const role =
+        localStorage.getItem(
+            "role"
+        );
+
+    if (!token) {
+
+        window.location.href =
+            "login.html";
+
+        return false;
+    }
+
+    if (
+        role !== "ADMIN" &&
+        role !== "DEPARTMENT_HEAD"
+    ) {
+
+        showToast(
+            "Department Head or Admin access required",
+            "error"
+        );
+
+        window.location.href =
+            "dashboard.html";
+
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Get authorization header with token
+ */
+function getAuthHeader() {
+
+    const token =
+        localStorage.getItem(
+            "token"
+        );
+
+    if (!token) {
+
+        return {};
+    }
+
+    return {
+        "Authorization": `Bearer ${token}`
+    };
+}
+
+/**
+ * Make authenticated API call
+ */
+async function authenticatedFetch(
+    url,
+    options = {}
+) {
+
+    const headers = {
+        "Content-Type": "application/json",
+        ...getAuthHeader(),
+        ...options.headers
+    };
+
+    const response = await fetch(
+        url,
+        {
+            ...options,
+            headers
+        }
+    );
+
+    // If 401, token expired - redirect to login
+    if (response.status === 401) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("user_name");
+        localStorage.removeItem("user_id");
+
+        showToast(
+            "Session expired. Please login again.",
+            "error"
+        );
+
+        window.location.href =
+            "login.html";
+
+        return null;
+    }
+
+    return response;
 }
 
 // ========================================
@@ -208,14 +373,53 @@ function requireAuth() {
 
 function logout() {
 
-    localStorage.removeItem(
-        "token"
-    );
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("user_id");
 
-    localStorage.removeItem(
-        "role"
-    );
+    showToast("Logged out successfully");
 
-    window.location.href =
-        "login.html";
+    setTimeout(() => {
+        window.location.href = "login.html";
+    }, 500);
+}
+
+// ========================================
+// LOAD CURRENT USER
+// ========================================
+
+function loadCurrentUser() {
+
+    const userName =
+        localStorage.getItem(
+            "user_name"
+        );
+
+    const userRole =
+        localStorage.getItem(
+            "role"
+        );
+
+    const sidebarUserName =
+        document.getElementById(
+            "sidebarUserName"
+        );
+
+    const sidebarUserRole =
+        document.getElementById(
+            "sidebarUserRole"
+        );
+
+    if (sidebarUserName && userName) {
+
+        sidebarUserName.innerText =
+            userName;
+    }
+
+    if (sidebarUserRole && userRole) {
+
+        sidebarUserRole.innerText =
+            userRole;
+    }
 }

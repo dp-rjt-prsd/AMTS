@@ -1,9 +1,6 @@
 const API_BASE_URL =
     "http://127.0.0.1:8000";
 
-const token =
-    requireAuth();
-
 let dashboardChart;
 
 // ======================================
@@ -13,6 +10,10 @@ let dashboardChart;
 document.addEventListener(
     "DOMContentLoaded",
     () => {
+
+        if (!requireAuth()) {
+            return;
+        }
 
         applyRoleRules();
 
@@ -36,14 +37,16 @@ async function loadDashboard() {
             await fetch(
                 `${API_BASE_URL}/dashboard`,
                 {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
 
         if (!response.ok) {
+
+            if (response.status === 401) {
+                logout();
+                throw new Error("Session expired");
+            }
 
             throw new Error(
                 "Dashboard fetch failed"

@@ -69,6 +69,10 @@
                 Repairs
             </a>
 
+            <a href="qr_scan.html">
+                QR Scanner
+            </a>
+
             <a
                 href="users.html"
                 class="admin-only"
@@ -226,6 +230,61 @@
 
             </section>
 
+            <!-- QR CODE SECTION -->
+
+            <section
+                class="card"
+                style="margin-bottom:24px;"
+            >
+
+                <h2
+                    style="margin-bottom:16px;"
+                >
+                    QR Code
+                </h2>
+
+                <div
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 16px;
+                    "
+                >
+
+                    <img
+                        id="assetQRCode"
+                        style="
+                            max-width: 300px;
+                            width: 100%;
+                            border: 2px solid var(--border);
+                            border-radius: 8px;
+                            padding: 12px;
+                            background: white;
+                        "
+                        alt="QR Code"
+                    />
+
+                    <button
+                        onclick="printQRForAsset()"
+                        style="
+                            padding: 10px 20px;
+                            background: var(--primary);
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: 500;
+                        "
+                    >
+                        🖨️ Print QR Code
+                    </button>
+
+                </div>
+
+            </section>
+
             <!-- TRANSFER HISTORY -->
 
             <section
@@ -347,6 +406,7 @@
 </div>
 
 <script src="js/utils.js"></script>
+<script>requireAuth();</script>
 <script src="js/asset_details.js"></script>
 
 </body>

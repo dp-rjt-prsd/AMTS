@@ -1,9 +1,6 @@
 const API_BASE_URL =
     "http://127.0.0.1:8000";
 
-const token =
-    requireAuth();
-
 let allUsers = [];
 
 // ======================================
@@ -14,32 +11,25 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
+        if (!requireAdmin()) {
+            return;
+        }
+
         applyRoleRules();
 
         loadCurrentUser();
 
         loadUsers();
 
-        document
-            .getElementById(
-                "userForm"
-            )
-            .addEventListener(
-                "submit",
-                createUser
-            );
+        const userForm = document.getElementById("userForm");
+        if (userForm) {
+            userForm.addEventListener("submit", createUser);
+        }
 
-        document
-            .getElementById(
-                "searchBox"
-            )
-            .addEventListener(
-                "keyup",
-                debounce(
-                    filterUsers,
-                    300
-                )
-            );
+        const searchBox = document.getElementById("searchBox");
+        if (searchBox) {
+            searchBox.addEventListener("keyup", debounce(filterUsers, 300));
+        }
     }
 );
 
@@ -65,14 +55,16 @@ async function loadUsers() {
             await fetch(
                 `${API_BASE_URL}/users`,
                 {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
 
         if (!response.ok) {
+
+            if (response.status === 401) {
+                logout();
+                throw new Error("Session expired");
+            }
 
             throw new Error(
                 "Failed to load users"
@@ -88,7 +80,7 @@ async function loadUsers() {
     }
     catch (error) {
 
-        console.error(error);
+        console.error("Error loading users:", error);
 
         table.innerHTML =
             emptyTableRow(
@@ -98,6 +90,9 @@ async function loadUsers() {
 
         showToast(
             "Unable to load users",
+            "error"
+        );
+    }
             "error"
         );
     }

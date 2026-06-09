@@ -1,9 +1,6 @@
 const API_BASE_URL =
     "http://127.0.0.1:8000";
 
-const token =
-    requireAuth();
-
 let allAssets = [];
 
 // ======================================
@@ -14,6 +11,10 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
+        if (!requireAuth()) {
+            return;
+        }
+
         applyRoleRules();
 
         loadCurrentUser();
@@ -22,26 +23,15 @@ document.addEventListener(
 
         loadDropdowns();
 
-        document
-            .getElementById(
-                "assetForm"
-            )
-            .addEventListener(
-                "submit",
-                createAsset
-            );
+        const assetForm = document.getElementById("assetForm");
+        if (assetForm) {
+            assetForm.addEventListener("submit", createAsset);
+        }
 
-        document
-            .getElementById(
-                "searchBox"
-            )
-            .addEventListener(
-                "keyup",
-                debounce(
-                    filterAssets,
-                    300
-                )
-            );
+        const searchBox = document.getElementById("searchBox");
+        if (searchBox) {
+            searchBox.addEventListener("keyup", debounce(filterAssets, 300));
+        }
     }
 );
 
@@ -59,17 +49,20 @@ async function loadDropdowns() {
             users
         ] = await Promise.all([
 
-            fetchData(
-                "/asset-types"
-            ),
+            fetchData("/asset-types").catch(e => {
+                console.error("Failed to load asset types:", e);
+                return [];
+            }),
 
-            fetchData(
-                "/statuses"
-            ),
+            fetchData("/statuses").catch(e => {
+                console.error("Failed to load statuses:", e);
+                return [];
+            }),
 
-            fetchData(
-                "/users"
-            )
+            fetchData("/users").catch(e => {
+                console.error("Failed to load users:", e);
+                return [];
+            })
         ]);
 
         populateSelect(
@@ -97,7 +90,10 @@ async function loadDropdowns() {
     }
     catch (error) {
 
-        console.error(error);
+        console.error("Error loading dropdowns:", error);
+        showToast("Failed to load dropdown data", "error");
+    }
+}
 
         showToast(
             "Failed loading dropdowns",
@@ -452,23 +448,33 @@ async function fetchData(
     endpoint
 ) {
 
-    const response =
-        await fetch(
-            `${API_BASE_URL}${endpoint}`,
-            {
-                headers: {
-                    Authorization:
-                        `Bearer ${token}`
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}${endpoint}`,
+                {
+                    headers: getAuthHeader()
                 }
+            );
+
+        if (!response.ok) {
+
+            if (response.status === 401) {
+                logout();
+                throw new Error("Session expired");
             }
-        );
 
-    if (!response.ok) {
+            throw new Error(
+                `API Error: ${response.status}`
+            );
+        }
 
-        throw new Error(
-            "Request failed"
-        );
+        return await response.json();
+
+    } catch (error) {
+
+        console.error("Fetch error:", error);
+        throw error;
     }
-
-    return response.json();
 }

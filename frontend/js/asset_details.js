@@ -1,9 +1,6 @@
 const API_BASE_URL =
     "http://127.0.0.1:8000";
 
-const token =
-    requireAuth();
-
 const params =
     new URLSearchParams(
         window.location.search
@@ -27,6 +24,10 @@ if (!assetId) {
 document.addEventListener(
     "DOMContentLoaded",
     () => {
+
+        if (!requireAuth()) {
+            return;
+        }
 
         applyRoleRules();
 
@@ -52,14 +53,20 @@ async function loadAsset() {
             await fetch(
                 `${API_BASE_URL}/assets/${assetId}`,
                 {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
 
         if (!response.ok) {
+
+            if (response.status === 401) {
+                logout();
+                throw new Error("Session expired");
+            }
+
+            if (response.status === 404) {
+                window.location.href = "assets.html";
+            }
 
             throw new Error(
                 "Failed to load asset"
@@ -78,6 +85,13 @@ async function loadAsset() {
             "assetName"
         ).innerText =
             asset.asset_name;
+
+        if (asset.qr_code) {
+            document.getElementById(
+                "assetName"
+            ).innerHTML +=
+                ' <span class="qr-badge">QR Enabled</span>';
+        }
 
         document.getElementById(
             "assetStatus"
@@ -114,6 +128,12 @@ async function loadAsset() {
         ).innerText =
             asset.remarks
             ?? "-";
+
+        document.getElementById(
+            "assetQRCode"
+        ).src =
+            asset.qr_code ??
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
     }
     catch (error) {
 
@@ -148,12 +168,19 @@ async function loadTransferHistory() {
             await fetch(
                 `${API_BASE_URL}/assets/${assetId}/transfers`,
                 {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
+
+        if (!response.ok) {
+
+            if (response.status === 401) {
+                logout();
+                throw new Error("Session expired");
+            }
+
+            throw new Error("Failed to load transfers");
+        }
 
         const transfers =
             await response.json();
@@ -165,7 +192,7 @@ async function loadTransferHistory() {
     }
     catch (error) {
 
-        console.error(error);
+        console.error("Error loading transfers:", error);
 
         table.innerHTML =
             emptyTableRow(
@@ -263,12 +290,19 @@ async function loadRepairHistory() {
             await fetch(
                 `${API_BASE_URL}/assets/${assetId}/repairs`,
                 {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
+
+        if (!response.ok) {
+
+            if (response.status === 401) {
+                logout();
+                throw new Error("Session expired");
+            }
+
+            throw new Error("Failed to load repairs");
+        }
 
         const repairs =
             await response.json();
@@ -280,7 +314,7 @@ async function loadRepairHistory() {
     }
     catch (error) {
 
-        console.error(error);
+        console.error("Error loading repairs:", error);
 
         table.innerHTML =
             emptyTableRow(
@@ -349,4 +383,86 @@ function renderRepairs(
 
         `
         ).join("");
+}
+
+// PRINT QR CODE
+
+function printQRForAsset() {
+
+    const assetId =
+        document.getElementById(
+            "assetId"
+        ).innerText;
+
+    const assetName =
+        document.getElementById(
+            "assetName"
+        ).innerText;
+
+    const qrImage =
+        document.getElementById(
+            "assetQRCode"
+        ).src;
+
+    const printWindow =
+        window.open(
+            "",
+            "print_qr",
+            "height=400,width=600"
+        );
+
+    printWindow.document.write(
+        `
+        <html>
+            <head>
+                <title>
+                    Print QR Code
+                </title>
+                <style>
+                    body {
+                        text-align: center;
+                        font-family: Arial;
+                        padding: 20px;
+                    }
+                    .qr-container {
+                        max-width: 400px;
+                        margin: 0 auto;
+                    }
+                    h2 {
+                        margin-top: 0;
+                    }
+                    img {
+                        max-width: 300px;
+                        margin: 20px 0;
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                    }
+                    p {
+                        font-size: 14px;
+                        margin: 10px 0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="qr-container">
+                    <h2>${assetName}</h2>
+                    <p>Asset ID: ${assetId}</p>
+                    <img
+                        src="${qrImage}"
+                        alt="QR Code"
+                    />
+                </div>
+            </body>
+        </html>
+        `
+    );
+
+    printWindow.document.close();
+
+    setTimeout(
+        () => {
+            printWindow.print();
+        },
+        250
+    );
 }

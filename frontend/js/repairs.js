@@ -1,9 +1,6 @@
 const API_BASE_URL =
     "http://127.0.0.1:8000";
 
-const token =
-    requireAuth();
-
 let allRepairs = [];
 
 // ======================================
@@ -14,41 +11,30 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
+        if (!requireAuth()) {
+            return;
+        }
+
         applyRoleRules();
 
         loadCurrentUser();
 
         loadRepairLogs();
 
-        document
-            .getElementById(
-                "repairForm"
-            )
-            .addEventListener(
-                "submit",
-                sendForRepair
-            );
+        const repairForm = document.getElementById("repairForm");
+        if (repairForm) {
+            repairForm.addEventListener("submit", sendForRepair);
+        }
 
-        document
-            .getElementById(
-                "returnRepairForm"
-            )
-            .addEventListener(
-                "submit",
-                returnFromRepair
-            );
+        const returnForm = document.getElementById("returnRepairForm");
+        if (returnForm) {
+            returnForm.addEventListener("submit", returnFromRepair);
+        }
 
-        document
-            .getElementById(
-                "searchBox"
-            )
-            .addEventListener(
-                "keyup",
-                debounce(
-                    filterRepairs,
-                    300
-                )
-            );
+        const searchBox = document.getElementById("searchBox");
+        if (searchBox) {
+            searchBox.addEventListener("keyup", debounce(filterRepairs, 300));
+        }
     }
 );
 
@@ -74,14 +60,16 @@ async function loadRepairLogs() {
             await fetch(
                 `${API_BASE_URL}/repair/logs`,
                 {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
 
         if (!response.ok) {
+
+            if (response.status === 401) {
+                logout();
+                throw new Error("Session expired");
+            }
 
             throw new Error(
                 "Failed loading repairs"
@@ -97,7 +85,7 @@ async function loadRepairLogs() {
     }
     catch (error) {
 
-        console.error(error);
+        console.error("Error loading repairs:", error);
 
         table.innerHTML =
             emptyTableRow(
