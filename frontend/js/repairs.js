@@ -235,10 +235,7 @@ async function sendForRepair(
                 {
                     method: "POST",
 
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
 
@@ -304,10 +301,7 @@ async function returnFromRepair(
                 {
                     method: "PUT",
 
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
 

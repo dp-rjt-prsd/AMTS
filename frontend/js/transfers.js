@@ -123,10 +123,7 @@ async function loadTransfers() {
             await fetch(
                 `${API_BASE_URL}/transfers`,
                 {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
+                    headers: getAuthHeader()
                 }
             );
 
@@ -330,8 +327,7 @@ async function transferAsset(
                         "Content-Type":
                             "application/json",
 
-                        Authorization:
-                            `Bearer ${token}`
+                        ...getAuthHeader()
                     },
 
                     body:

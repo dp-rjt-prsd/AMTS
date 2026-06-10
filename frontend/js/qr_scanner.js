@@ -35,8 +35,9 @@ function switchTab(tabName) {
     // Show selected tab
     document.getElementById(tabName).classList.add("active");
 
-    // Add active to clicked button
-    event.target.classList.add("active");
+    // Add active to clicked button (using attribute selector to prevent global event errors)
+    const activeBtn = document.querySelector(`.tab-btn[onclick*='${tabName}']`);
+    if (activeBtn) activeBtn.classList.add("active");
 
     // Stop scanning if switching away from camera
     if (tabName !== "camera" && scanningActive) {
@@ -58,20 +59,26 @@ async function startCamera() {
     }
 
     try {
-        // Request camera access
         videoStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" },
+            video: true
         });
 
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("muted", "true");
         video.srcObject = videoStream;
         video.style.display = "block";
 
-        scanBtn.innerText = "⏹️ Stop Scanning";
-
-        scanningActive = true;
-
-        // Start scanning loop
-        scanQRFromVideo();
+        // Wait for the video feed metadata to load before playing
+        video.onloadedmetadata = async () => {
+            try {
+                await video.play();
+                scanBtn.innerText = "Stop Scanning";
+                scanningActive = true;
+                scanQRFromVideo();
+            } catch (e) {
+                console.error("Video play error:", e);
+            }
+        };
     } catch (error) {
         console.error("Error accessing camera:", error);
 
@@ -95,14 +102,15 @@ function stopCamera() {
     }
 
     video.style.display = "none";
-    scanBtn.innerText = "📷 Start Camera";
+    video.srcObject = null;
+    scanBtn.innerText = "Start Camera";
     scanningActive = false;
 }
 
 function scanQRFromVideo() {
     const video = document.getElementById("video");
     const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
+    const context = canvas.getContext("2d", { willReadFrequently: true });
 
     function scan() {
         if (!scanningActive) return;
@@ -113,19 +121,25 @@ function scanQRFromVideo() {
 
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const imageData = context.getImageData(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-            if (code) {
-                handleScannedQR(code.data);
-                stopCamera();
-                return;
+            try {
+                const imageData = context.getImageData(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+    
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+    
+                if (code && code.data) {
+                    handleScannedQR(code.data);
+                    stopCamera();
+                    return;
+                }
+            } catch (e) {
+                console.error("QR Scan Error:", e);
             }
         }
 

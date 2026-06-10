@@ -5,19 +5,13 @@
 
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>
         Asset Details
     </title>
 
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
+    <link rel="stylesheet" href="css/style.css">
 
 </head>
 
@@ -27,13 +21,10 @@
 
     <!-- SIDEBAR -->
 
-    <aside
-        class="sidebar"
-        id="sidebar"
-    >
+    <aside class="sidebar" id="sidebar">
 
         <div class="sidebar-header">
-            AMS
+                AMTS
         </div>
 
         <div class="sidebar-user">
@@ -54,10 +45,7 @@
                 Dashboard
             </a>
 
-            <a
-                href="assets.html"
-                class="active"
-            >
+            <a href="assets.html" class="active">
                 Assets
             </a>
 
@@ -73,18 +61,11 @@
                 QR Scanner
             </a>
 
-            <a
-                href="users.html"
-                class="admin-only"
-            >
+            <a href="users.html" class="admin-only">
                 Users
             </a>
 
-            <a
-                href="#"
-                class="logout"
-                onclick="logout()"
-            >
+            <a href="#" class="logout" onclick="logout()">
                 Logout
             </a>
 
@@ -98,10 +79,7 @@
 
         <header class="topbar">
 
-            <div
-                class="menu-toggle"
-                onclick="toggleSidebar()"
-            >
+            <div class="menu-toggle" onclick="toggleSidebar()">
                 ☰
             </div>
 
@@ -109,9 +87,7 @@
                 Asset Details
             </h2>
 
-            <button
-                onclick="window.location.href='assets.html'"
-            >
+            <button onclick="window.location.href='assets.html'">
                 Back
             </button>
 
@@ -121,48 +97,24 @@
 
             <!-- ASSET SUMMARY -->
 
-            <section
-                class="card"
-                style="margin-bottom:24px;"
-            >
+            <section class="card" style="margin-bottom:24px;">
 
-                <h2
-                    id="assetName"
-                    style="margin-bottom:12px;"
-                >
+                <h2 id="assetName" style="margin-bottom:12px;">
                     Loading...
                 </h2>
 
-                <p
-                    style="
-                        color:var(--muted);
-                        margin-bottom:24px;
-                    "
-                >
+                <p style="color:var(--muted); margin-bottom:24px;">
                     Asset ID:
-                    <strong id="assetId">
-                        -
-                    </strong>
+                    <strong id="assetId">-</strong>
                 </p>
 
-                <div
-                    style="
-                        display:grid;
-                        grid-template-columns:
-                        repeat(auto-fit,minmax(220px,1fr));
-                        gap:20px;
-                    "
-                >
+                <div class="card-container">
 
                     <div>
 
                         <h4>Status</h4>
 
-                        <div
-                            id="assetStatus"
-                        >
-                            -
-                        </div>
+                        <div id="assetStatus">-</div>
 
                     </div>
 
@@ -170,11 +122,7 @@
 
                         <h4>Current Holder</h4>
 
-                        <p
-                            id="currentHolder"
-                        >
-                            -
-                        </p>
+                        <p id="currentHolder">-</p>
 
                     </div>
 
@@ -182,11 +130,7 @@
 
                         <h4>Asset Type</h4>
 
-                        <p
-                            id="assetType"
-                        >
-                            -
-                        </p>
+                        <p id="assetType">-</p>
 
                     </div>
 
@@ -194,11 +138,7 @@
 
                         <h4>Serial Number</h4>
 
-                        <p
-                            id="serialNumber"
-                        >
-                            -
-                        </p>
+                        <p id="serialNumber">-</p>
 
                     </div>
 
@@ -206,11 +146,7 @@
 
                         <h4>Price</h4>
 
-                        <p
-                            id="price"
-                        >
-                            -
-                        </p>
+                        <p id="price">-</p>
 
                     </div>
 
@@ -218,11 +154,7 @@
 
                         <h4>Remarks</h4>
 
-                        <p
-                            id="remarks"
-                        >
-                            -
-                        </p>
+                        <p id="remarks">-</p>
 
                     </div>
 
@@ -232,14 +164,9 @@
 
             <!-- QR CODE SECTION -->
 
-            <section
-                class="card"
-                style="margin-bottom:24px;"
-            >
+            <section class="card" style="margin-bottom:24px;">
 
-                <h2
-                    style="margin-bottom:16px;"
-                >
+                <h2 style="margin-bottom:16px;">
                     QR Code
                 </h2>
 
@@ -257,7 +184,7 @@
                         style="
                             max-width: 300px;
                             width: 100%;
-                            border: 2px solid var(--border);
+                            border: 2px solid var(--qr-accent);
                             border-radius: 8px;
                             padding: 12px;
                             background: white;
@@ -287,21 +214,13 @@
 
             <!-- TRANSFER HISTORY -->
 
-            <section
-                style="margin-bottom:24px;"
-            >
+            <section style="margin-bottom:24px;">
 
-                <h2
-                    style="
-                        margin-bottom:16px;
-                    "
-                >
+                <h2 style="margin-bottom:16px;">
                     Transfer History
                 </h2>
 
-                <div
-                    class="table-wrapper"
-                >
+                <div class="table-wrapper">
 
                     <table>
 
@@ -333,9 +252,7 @@
 
                         </thead>
 
-                        <tbody
-                            id="transferHistory"
-                        >
+                        <tbody id="transferHistory">
 
                         </tbody>
 
@@ -349,17 +266,11 @@
 
             <section>
 
-                <h2
-                    style="
-                        margin-bottom:16px;
-                    "
-                >
+                <h2 style="margin-bottom:16px;">
                     Repair History
                 </h2>
 
-                <div
-                    class="table-wrapper"
-                >
+                <div class="table-wrapper">
 
                     <table>
 
@@ -387,9 +298,7 @@
 
                         </thead>
 
-                        <tbody
-                            id="repairHistory"
-                        >
+                        <tbody id="repairHistory">
 
                         </tbody>
 

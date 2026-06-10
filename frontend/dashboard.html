@@ -1,31 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        AMS Dashboard
-    </title>
-
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AMTS</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
-
-<div class="app-layout">
+    <!-- MODERN DARK LAYOUT -->
+    <div class="app-layout">
 
     <!-- SIDEBAR -->
 
@@ -35,7 +18,7 @@
     >
 
         <div class="sidebar-header">
-            AMS
+            AMTS
         </div>
 
         <div class="sidebar-user">
@@ -114,7 +97,7 @@
             </h2>
 
             <button
-                onclick="loadDashboard()"
+                onclick="loadDashboardData()"
             >
                 Refresh
             </button>
@@ -133,76 +116,64 @@
 
             <div class="card-container">
 
-                <div class="card">
-
-                    <h3>
-                        Total Assets
-                    </h3>
-
-                    <p id="totalAssets">
-                        ...
-                    </p>
-
+                <!-- ===================== ADMIN ===================== -->
+                <div class="role-section admin-only visible">
+                    <div class="card">
+                        <h3>Total Assets</h3>
+                        <p id="totalAssets">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Users</h3>
+                        <p id="totalUsers">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>Assets In Repair</h3>
+                        <p id="repairAssets">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>Retired Assets</h3>
+                        <p id="retiredAssets">...</p>
+                    </div>
                 </div>
 
-                <div class="card">
-
-                    <h3>
-                        Total Users
-                    </h3>
-
-                    <p id="totalUsers">
-                        ...
-                    </p>
-
+                <!-- ================= DEPARTMENT HEAD =============== -->
+                <div class="role-section department-head-only visible">
+                    <div class="card">
+                        <h3>Team Asset Scope</h3>
+                        <p id="deptAssets">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>Available Assets</h3>
+                        <p id="availableAssets">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>Team Members</h3>
+                        <p id="teamMembers">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>Assigned Assets</h3>
+                        <p id="assignedAssets">...</p>
+                    </div>
                 </div>
 
-                <div class="card">
-
-                    <h3>
-                        Available Assets
-                    </h3>
-
-                    <p id="availableAssets">
-                        ...
-                    </p>
-
-                </div>
-
-                <div class="card">
-
-                    <h3>
-                        Assigned Assets
-                    </h3>
-
-                    <p id="assignedAssets">
-                        ...
-                    </p>
-
-                </div>
-
-                <div class="card">
-
-                    <h3>
-                        Assets In Repair
-                    </h3>
-
-                    <p id="repairAssets">
-                        ...
-                    </p>
-
-                </div>
-
-                <div class="card">
-
-                    <h3>
-                        Retired Assets
-                    </h3>
-
-                    <p id="retiredAssets">
-                        ...
-                    </p>
-
+                <!-- ===================== NORMAL USER ============== -->
+                <div class="role-section normal-user-only visible">
+                    <div class="card">
+                        <h3>My Assets</h3>
+                        <p id="myAssets">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>My Repairs</h3>
+                        <p id="myRepairs">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>Available Assets</h3>
+                        <p id="availableAssets">...</p>
+                    </div>
+                    <div class="card">
+                        <h3>Assigned Assets</h3>
+                        <p id="assignedAssets">...</p>
+                    </div>
                 </div>
 
             </div>
@@ -220,9 +191,11 @@
                     Asset Status Distribution
                 </h2>
 
-                <canvas
-                    id="assetStatusChart"
-                ></canvas>
+                <div style="position: relative; height: 300px;">
+                    <canvas
+                        id="assetStatusChart"
+                    ></canvas>
+                </div>
 
             </section>
 
@@ -296,6 +269,7 @@
 </div>
 
 <script src="js/utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>requireAuth();</script>
 <script src="js/dashboard.js"></script>
 

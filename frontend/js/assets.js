@@ -54,7 +54,7 @@ async function loadDropdowns() {
                 return [];
             }),
 
-            fetchData("/statuses").catch(e => {
+            fetchData("/asset-statuses").catch(e => {
                 console.error("Failed to load statuses:", e);
                 return [];
             }),
@@ -69,14 +69,16 @@ async function loadDropdowns() {
             "asset_type_id",
             types,
             "asset_type_id",
-            "asset_type_name"
+            "asset_type_name",
+            true
         );
 
         populateSelect(
             "status_id",
             statuses,
             "status_id",
-            "status_name"
+            "status_name",
+            true
         );
 
         populateSelect(
@@ -92,13 +94,6 @@ async function loadDropdowns() {
 
         console.error("Error loading dropdowns:", error);
         showToast("Failed to load dropdown data", "error");
-    }
-}
-
-        showToast(
-            "Failed loading dropdowns",
-            "error"
-        );
     }
 }
 
@@ -122,6 +117,8 @@ function populateSelect(
 
     select.innerHTML =
         first;
+
+    if (!Array.isArray(data)) return;
 
     data.forEach(item => {
 
@@ -391,8 +388,7 @@ async function createAsset(
                         "Content-Type":
                             "application/json",
 
-                        Authorization:
-                            `Bearer ${token}`
+                        ...getAuthHeader()
                     },
 
                     body:

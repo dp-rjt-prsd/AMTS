@@ -423,3 +423,24 @@ function loadCurrentUser() {
             userRole;
     }
 }
+
+// ========================================
+// TABLE HELPERS
+// ========================================
+
+function showTableLoader(table, colspan) {
+    if (!table) return;
+    table.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center; padding:30px;"><div class="loader"></div></td></tr>`;
+}
+
+function emptyTableRow(colspan, message) {
+    return `<tr><td colspan="${colspan}" style="text-align:center; color:var(--muted); padding:30px;">${message}</td></tr>`;
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}

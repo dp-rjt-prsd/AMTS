@@ -1,64 +1,38 @@
-const API_BASE_URL =
-    "http://127.0.0.1:8000";
-
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
-
-const assetId =
-    params.get(
-        "asset_id"
-    );
+const API_BASE_URL = "http://127.0.0.1:8000";
+const params = new URLSearchParams(window.location.search);
+const assetId = params.get("asset_id");
 
 if (!assetId) {
-
-    window.location.href =
-        "assets.html";
+    window.location.href = "assets.html";
 }
 
 // ======================================
 // INIT
 // ======================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        if (!requireAuth()) {
-            return;
-        }
-
-        applyRoleRules();
-
-        loadCurrentUser();
-
-        loadAsset();
-
-        loadTransferHistory();
-
-        loadRepairHistory();
+document.addEventListener("DOMContentLoaded", () => {
+    if (!requireAuth()) {
+        return;
     }
-);
+
+    applyRoleRules();
+    loadCurrentUser();
+    loadAsset();
+    loadTransferHistory();
+    loadRepairHistory();
+});
 
 // ======================================
 // ASSET DETAILS
 // ======================================
 
 async function loadAsset() {
-
     try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/assets/${assetId}`,
-                {
-                    headers: getAuthHeader()
-                }
-            );
+        const response = await fetch(`${API_BASE_URL}/assets/${assetId}`, {
+            headers: getAuthHeader()
+        });
 
         if (!response.ok) {
-
             if (response.status === 401) {
                 logout();
                 throw new Error("Session expired");
@@ -68,81 +42,29 @@ async function loadAsset() {
                 window.location.href = "assets.html";
             }
 
-            throw new Error(
-                "Failed to load asset"
-            );
+            throw new Error("Failed to load asset");
         }
 
-        const asset =
-            await response.json();
+        const asset = await response.json();
 
-        document.getElementById(
-            "assetId"
-        ).innerText =
-            asset.asset_id;
-
-        document.getElementById(
-            "assetName"
-        ).innerText =
-            asset.asset_name;
+        document.getElementById("assetId").innerText = asset.asset_id;
+        document.getElementById("assetName").innerText = asset.asset_name;
 
         if (asset.qr_code) {
-            document.getElementById(
-                "assetName"
-            ).innerHTML +=
-                ' <span class="qr-badge">QR Enabled</span>';
+            document.getElementById("assetName").innerHTML += ' <span class="qr-badge">QR Enabled</span>';
         }
 
-        document.getElementById(
-            "assetStatus"
-        ).innerHTML =
-            getStatusBadge(
-                asset.status_name
-            );
-
-        document.getElementById(
-            "currentHolder"
-        ).innerText =
-            asset.holder_name
-            ?? "-";
-
-        document.getElementById(
-            "assetType"
-        ).innerText =
-            asset.asset_type_name
-            ?? "-";
-
-        document.getElementById(
-            "serialNumber"
-        ).innerText =
-            asset.serial_number
-            ?? "-";
-
-        document.getElementById(
-            "price"
-        ).innerText =
-            `₹${asset.price ?? 0}`;
-
-        document.getElementById(
-            "remarks"
-        ).innerText =
-            asset.remarks
-            ?? "-";
-
-        document.getElementById(
-            "assetQRCode"
-        ).src =
-            asset.qr_code ??
+        document.getElementById("assetStatus").innerHTML = getStatusBadge(asset.status_name);
+        document.getElementById("currentHolder").innerText = asset.holder_name ?? "-";
+        document.getElementById("assetType").innerText = asset.asset_type_name ?? "-";
+        document.getElementById("serialNumber").innerText = asset.serial_number ?? "-";
+        document.getElementById("price").innerText = `₹${asset.price ?? 0}`;
+        document.getElementById("remarks").innerText = asset.remarks ?? "-";
+        document.getElementById("assetQRCode").src = asset.qr_code ?? 
             "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-    }
-    catch (error) {
-
+    } catch (error) {
         console.error(error);
-
-        showToast(
-            "Unable to load asset",
-            "error"
-        );
+        showToast("Unable to load asset", "error");
     }
 }
 
@@ -151,121 +73,47 @@ async function loadAsset() {
 // ======================================
 
 async function loadTransferHistory() {
-
-    const table =
-        document.getElementById(
-            "transferHistory"
-        );
-
-    showTableLoader(
-        table,
-        5
-    );
+    const table = document.getElementById("transferHistory");
+    showTableLoader(table, 5);
 
     try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/assets/${assetId}/transfers`,
-                {
-                    headers: getAuthHeader()
-                }
-            );
+        const response = await fetch(`${API_BASE_URL}/assets/${assetId}/transfers`, {
+            headers: getAuthHeader()
+        });
 
         if (!response.ok) {
-
             if (response.status === 401) {
                 logout();
                 throw new Error("Session expired");
             }
-
             throw new Error("Failed to load transfers");
         }
 
-        const transfers =
-            await response.json();
-
-        renderTransfers(
-            transfers
-        );
-
-    }
-    catch (error) {
-
+        const transfers = await response.json();
+        renderTransfers(transfers);
+    } catch (error) {
         console.error("Error loading transfers:", error);
-
-        table.innerHTML =
-            emptyTableRow(
-                5,
-                "Unable to load transfer history"
-            );
+        table.innerHTML = emptyTableRow(5, "Unable to load transfer history");
     }
 }
 
-function renderTransfers(
-    transfers
-) {
+function renderTransfers(transfers) {
+    const table = document.getElementById("transferHistory");
 
-    const table =
-        document.getElementById(
-            "transferHistory"
-        );
-
-    if (
-        !transfers ||
-        transfers.length === 0
-    ) {
-
-        table.innerHTML =
-            emptyTableRow(
-                5,
-                "No transfer history found"
-            );
-
+    if (!transfers || transfers.length === 0) {
+        table.innerHTML = emptyTableRow(5, "No transfer history found");
         return;
     }
 
-    table.innerHTML =
-        transfers.map(
-            transfer => `
-
+    table.innerHTML = transfers.map(transfer => `
         <tr>
-
-            <td>
-                ${transfer.transfer_id}
-            </td>
-
-            <td>
-                ${
-                    transfer.from_user_name
-                    ?? "-"
-                }
-            </td>
-
-            <td>
-                ${
-                    transfer.to_user_name
-                    ?? "-"
-                }
-            </td>
-
-            <td>
-                ${
-                    transfer.remarks
-                    ?? "-"
-                }
-            </td>
-
-            <td>
-                ${formatDate(
-                    transfer.transferred_at
-                )}
-            </td>
-
+            <td>${transfer.transfer_id}</td>
+            <td>${transfer.from_user_name ?? "-"}</td>
+            <td>${transfer.to_user_name ?? "-"}</td>
+            <td>${transfer.remarks ?? "-"}</td>
+            <td>${formatDate(transfer.transferred_at)}</td>
         </tr>
-
-        `
-        ).join("");
+    `).join("");
 }
 
 // ======================================
@@ -273,143 +121,56 @@ function renderTransfers(
 // ======================================
 
 async function loadRepairHistory() {
-
-    const table =
-        document.getElementById(
-            "repairHistory"
-        );
-
-    showTableLoader(
-        table,
-        4
-    );
+    const table = document.getElementById("repairHistory");
+    showTableLoader(table, 4);
 
     try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/assets/${assetId}/repairs`,
-                {
-                    headers: getAuthHeader()
-                }
-            );
+        const response = await fetch(`${API_BASE_URL}/assets/${assetId}/repairs`, {
+            headers: getAuthHeader()
+        });
 
         if (!response.ok) {
-
             if (response.status === 401) {
                 logout();
                 throw new Error("Session expired");
             }
-
             throw new Error("Failed to load repairs");
         }
 
-        const repairs =
-            await response.json();
-
-        renderRepairs(
-            repairs
-        );
-
-    }
-    catch (error) {
-
+        const repairs = await response.json();
+        renderRepairs(repairs);
+    } catch (error) {
         console.error("Error loading repairs:", error);
-
-        table.innerHTML =
-            emptyTableRow(
-                4,
-                "Unable to load repair history"
-            );
+        table.innerHTML = emptyTableRow(4, "Unable to load repair history");
     }
 }
 
-function renderRepairs(
-    repairs
-) {
+function renderRepairs(repairs) {
+    const table = document.getElementById("repairHistory");
 
-    const table =
-        document.getElementById(
-            "repairHistory"
-        );
-
-    if (
-        !repairs ||
-        repairs.length === 0
-    ) {
-
-        table.innerHTML =
-            emptyTableRow(
-                4,
-                "No repair history found"
-            );
-
+    if (!repairs || repairs.length === 0) {
+        table.innerHTML = emptyTableRow(4, "No repair history found");
         return;
     }
 
-    table.innerHTML =
-        repairs.map(
-            repair => `
-
+    table.innerHTML = repairs.map(repair => `
         <tr>
-
-            <td>
-                ${repair.repair_id}
-            </td>
-
-            <td>
-                ${
-                    repair.issue_description
-                }
-            </td>
-
-            <td>
-                ${formatDate(
-                    repair.sent_at
-                )}
-            </td>
-
-            <td>
-                ${
-                    repair.returned_at
-                    ? formatDate(
-                        repair.returned_at
-                    )
-                    : "-"
-                }
-            </td>
-
+            <td>${repair.repair_id}</td>
+            <td>${repair.issue_description}</td>
+            <td>${formatDate(repair.sent_at)}</td>
+            <td>${repair.returned_at ? formatDate(repair.returned_at) : "-"}</td>
         </tr>
-
-        `
-        ).join("");
+    `).join("");
 }
 
 // PRINT QR CODE
 
 function printQRForAsset() {
+    const assetId = document.getElementById("assetId").innerText;
+    const assetName = document.getElementById("assetName").innerText;
+    const qrImage = document.getElementById("assetQRCode").src;
 
-    const assetId =
-        document.getElementById(
-            "assetId"
-        ).innerText;
-
-    const assetName =
-        document.getElementById(
-            "assetName"
-        ).innerText;
-
-    const qrImage =
-        document.getElementById(
-            "assetQRCode"
-        ).src;
-
-    const printWindow =
-        window.open(
-            "",
-            "print_qr",
-            "height=400,width=600"
-        );
+    const printWindow = window.open("", "print_qr", "height=400,width=600");
 
     printWindow.document.write(
         `
@@ -458,11 +219,7 @@ function printQRForAsset() {
     );
 
     printWindow.document.close();
-
-    setTimeout(
-        () => {
-            printWindow.print();
-        },
-        250
-    );
+    setTimeout(() => {
+        printWindow.print();
+    }, 250);
 }

@@ -1,9 +1,38 @@
 /* =====================================================
-   DESIGN SYSTEM
+   MODERN DARK THEME - DESIGN SYSTEM
 ===================================================== */
 
 :root {
-
+    /* PRIMARY: Neon Green Accents */
+    --neon-green: #00ff41;
+    --neon-green-dark: #00cc33;
+    --neon-green-light: #33ff66;
+    
+    /* BACKGROUNDS: Dark Theme */
+    --bg-primary: #0a0e27;
+    --bg-secondary: #131829;
+    --bg-tertiary: #1a1f3a;
+    
+    /* SURFACES */
+    --surface-elevated: #242b48;
+    --surface-card: #1a1f3a;
+    
+    /* TEXT: Light */
+    --text-primary: #f0f5ff;
+    --text-secondary: #a8b5d1;
+    --text-tertiary: #7a84a6;
+    
+    /* STATUS COLORS */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #06b6d4;
+    
+    /* BORDERS & ACCENTS */
+    --border-color: #2a3154;
+    --border-accent: var(--neon-green);
+    
+    /* LEGACY COMPATIBILITY */
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
 
@@ -14,13 +43,13 @@
     --qr-accent: #0891b2;
     --qr-accent-light: #e0f2fe;
 
-    --background: #f8fafc;
-    --surface: #ffffff;
+    --background: var(--bg-primary);
+    --surface: var(--surface-card);
 
-    --text: #0f172a;
-    --muted: #64748b;
+    --text: var(--text-primary);
+    --muted: var(--text-tertiary);
 
-    --border: #e2e8f0;
+    --border: var(--border-color);
 
     --sidebar-width: 260px;
 
@@ -94,12 +123,7 @@ a {
 
     padding: 20px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #eff6ff,
-            #f8fafc
-        );
+    background: var(--bg-primary);
 }
 
 .login-container {
@@ -108,8 +132,8 @@ a {
 
     max-width: 420px;
 
-    background:
-        white;
+    background: var(--surface-elevated);
+    color: var(--text-primary);
 
     padding: 40px;
 
@@ -200,7 +224,11 @@ a {
 .sidebar-nav a.active {
 
     background:
-        var(--primary);
+        rgba(0,255,65,.14);
+    border: 1px solid rgba(0,255,65,.35);
+    box-shadow:
+        0 0 20px rgba(0,255,65,.18);
+    color: #d6ffe8;
 }
 
 .sidebar-nav .logout {
@@ -228,12 +256,10 @@ a {
 
     height: 72px;
 
-    background:
-        white;
+    background: rgba(10,14,39,.92);
+    backdrop-filter: blur(10px);
 
-    border-bottom:
-        1px solid
-        var(--border);
+    border-bottom: 1px solid rgba(42,49,84,.9);
 
     display: flex;
 
@@ -243,6 +269,7 @@ a {
 
     padding: 0 24px;
 }
+
 
 .page-content {
 
@@ -269,7 +296,8 @@ a {
 .card {
 
     background:
-        white;
+        rgba(19,24,41,.78);
+    border: 1px solid rgba(42,49,84,.9);
 
     border-radius:
         var(--radius);
@@ -316,7 +344,8 @@ a {
 .asset-form {
 
     background:
-        white;
+        rgba(19,24,41,.78);
+    border: 1px solid rgba(42,49,84,.9);
 
     padding: 24px;
 
@@ -358,17 +387,21 @@ select {
 
     border:
         1px solid
-        var(--border);
+        rgba(42,49,84,.9);
 
     border-radius: 10px;
 
     background:
-        white;
+        rgba(10,14,39,.55);
+
+    color: var(--text-primary);
 }
 
 input:focus,
 textarea:focus,
 select:focus {
+
+    color: var(--text-primary);
 
     outline: none;
 
@@ -400,9 +433,11 @@ button {
     border-radius: 10px;
 
     background:
-        var(--primary);
-
-    color: white;
+        var(--neon-green);
+    color: #07110a;
+    box-shadow:
+        0 0 0 1px rgba(0,255,65,.2),
+        0 0 18px rgba(0,255,65,.18);
 
     padding: 12px 18px;
 
@@ -413,7 +448,18 @@ button {
 button:hover {
 
     background:
-        var(--primary-hover);
+        var(--neon-green-dark);
+    box-shadow:
+        0 0 0 1px rgba(0,255,65,.25),
+        0 0 26px rgba(0,255,65,.28);
+    transform: translateY(-2px);
+}
+
+button:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 3px rgba(0,255,65,.25),
+        0 0 24px rgba(0,255,65,.30);
 }
 
 /* =====================================================
@@ -440,7 +486,8 @@ button:hover {
 .table-wrapper {
 
     background:
-        white;
+        rgba(19,24,41,.78);
+    border: 1px solid rgba(42,49,84,.9);
 
     border-radius:
         var(--radius);
@@ -461,7 +508,7 @@ table {
 table th {
 
     background:
-        #eff6ff;
+        rgba(10,14,39,.65);
 
     text-align: left;
 
@@ -480,7 +527,7 @@ table td {
 tbody tr:hover {
 
     background:
-        #f8fafc;
+        rgba(0,255,65,.06);
 }
 
 /* =====================================================
@@ -564,8 +611,8 @@ tbody tr:hover {
 
 .toast {
 
-    background:
-        white;
+    background: var(--surface-elevated);
+    color: var(--text-primary);
 
     padding: 14px 18px;
 
@@ -726,19 +773,6 @@ tbody tr:hover {
     position: relative;
 }
 
-.sidebar-nav a[href*="qr"]:before {
-    content: "⚡";
-    margin-right: 8px;
-    color: var(--qr-accent);
-    font-size: 16px;
-}
-
-.sidebar-nav a[href*="qr"].active {
-    background: var(--qr-accent-light);
-    color: var(--qr-accent);
-    font-weight: 600;
-}
-
 /* QR Container */
 .qr-container {
     background: var(--surface);
@@ -755,12 +789,6 @@ tbody tr:hover {
     display: flex;
     align-items: center;
     gap: 12px;
-}
-
-.qr-container h1:before {
-    content: "⚡";
-    color: var(--qr-accent);
-    font-size: 28px;
 }
 
 /* Tab Switching */
@@ -787,8 +815,8 @@ tbody tr:hover {
 }
 
 .tab-btn:hover {
-    color: var(--text);
-    background: rgba(0,0,0,.02);
+    color: var(--text-primary);
+    background: rgba(255,255,255,.05);
 }
 
 .tab-btn.active {
@@ -805,6 +833,15 @@ tbody tr:hover {
     background: currentColor;
     margin-right: 8px;
     opacity: 0.6;
+}
+
+/* Tab Display Logic */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 /* Camera View */
@@ -836,14 +873,15 @@ tbody tr:hover {
 
 #scanBtn,
 #uploadBtn {
-    background: var(--qr-accent);
+    background: var(--neon-green);
+    color: #07110a;
     color: white;
     box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
 }
 
 #scanBtn:hover,
 #uploadBtn:hover {
-    background: #0e7490;
+    background: var(--neon-green-dark);
     box-shadow: 0 6px 16px rgba(8, 145, 178, 0.4);
     transform: translateY(-2px);
 }
@@ -859,6 +897,7 @@ tbody tr:hover {
 /* Result Messages */
 .result-box {
     padding: 16px;
+    box-shadow: 0 0 0 1px rgba(0,255,65,.12);
     background: var(--qr-accent-light);
     border-left: 4px solid var(--qr-accent);
     border-radius: 8px;
@@ -866,12 +905,14 @@ tbody tr:hover {
 }
 
 .result-box.success {
-    background: #dcfce7;
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
     border-left-color: var(--success);
 }
 
 .result-box.error {
-    background: #fee2e2;
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
     border-left-color: var(--danger);
 }
 
@@ -910,7 +951,8 @@ tbody tr:hover {
 }
 
 .modal-content {
-    background: var(--surface);
+    background: var(--surface-elevated);
+    color: var(--text-primary);
     padding: 32px;
     border-radius: 12px;
     text-align: center;
@@ -952,7 +994,7 @@ tbody tr:hover {
 
 .asset-info {
     text-align: left;
-    background: var(--qr-accent-light);
+    background: rgba(8, 145, 178, 0.1);
     padding: 16px;
     border-radius: 8px;
     margin: 20px 0;
@@ -966,7 +1008,7 @@ tbody tr:hover {
 
 .asset-info .label {
     font-weight: 600;
-    color: var(--text);
+    color: var(--text-secondary);
     display: inline-block;
     width: 30%;
 }
@@ -1007,13 +1049,13 @@ tbody tr:hover {
 }
 
 .btn-cancel {
-    background: var(--border);
-    color: var(--text);
+    background: var(--surface-card);
+    color: var(--text-primary);
     flex: 1;
 }
 
 .btn-cancel:hover {
-    background: #cbd5e1;
+    background: var(--border-color);
 }
 
 /* QR Display Section */
@@ -1023,7 +1065,7 @@ tbody tr:hover {
     align-items: center;
     gap: 20px;
     padding: 24px;
-    background: var(--qr-accent-light);
+    background: rgba(8, 145, 178, 0.1);
     border-radius: 12px;
     border-left: 4px solid var(--qr-accent);
 }
@@ -1039,7 +1081,7 @@ tbody tr:hover {
 
 .asset-details {
     width: 100%;
-    background: white;
+    background: var(--surface-card);
     padding: 16px;
     border-radius: 8px;
     border-left: 3px solid var(--qr-accent);
@@ -1060,7 +1102,7 @@ tbody tr:hover {
 
 .detail-label {
     font-weight: 600;
-    color: var(--text);
+    color: var(--text-secondary);
 }
 
 .detail-value {
@@ -1087,12 +1129,12 @@ tbody tr:hover {
 }
 
 .btn-back {
-    background: var(--border);
-    color: var(--text);
+    background: var(--surface-card);
+    color: var(--text-primary);
 }
 
 .btn-back:hover {
-    background: #cbd5e1;
+    background: var(--border-color);
 }
 
 /* Loading States */
@@ -1120,9 +1162,9 @@ tbody tr:hover {
 /* Error States */
 .error-message {
     padding: 16px;
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 8px;
     margin-bottom: 20px;
     border-left: 4px solid var(--danger);
@@ -1131,18 +1173,13 @@ tbody tr:hover {
 /* QR Badge for Assets */
 .qr-badge {
     display: inline-block;
-    background: var(--qr-accent-light);
+    background: rgba(8, 145, 178, 0.2);
     color: var(--qr-accent);
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
     margin-left: 8px;
-}
-
-.qr-badge:before {
-    content: "⚡";
-    margin-right: 4px;
 }
 
 /* Responsive QR */

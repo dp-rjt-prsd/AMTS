@@ -1,361 +1,116 @@
-const API_BASE_URL =
-    "http://127.0.0.1:8000";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 let allUsers = [];
 
-// ======================================
-// INIT
-// ======================================
+document.addEventListener("DOMContentLoaded", () => {
+    if (!requireAuth() || !requireAdmin()) return;
+    
+    loadCurrentUser();
+    loadUsers();
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        if (!requireAdmin()) {
-            return;
-        }
-
-        applyRoleRules();
-
-        loadCurrentUser();
-
-        loadUsers();
-
-        const userForm = document.getElementById("userForm");
-        if (userForm) {
-            userForm.addEventListener("submit", createUser);
-        }
-
-        const searchBox = document.getElementById("searchBox");
-        if (searchBox) {
-            searchBox.addEventListener("keyup", debounce(filterUsers, 300));
-        }
+    const userForm = document.getElementById("userForm");
+    if (userForm) {
+        userForm.addEventListener("submit", createUser);
     }
-);
-
-// ======================================
-// LOAD USERS
-// ======================================
+    
+    const searchBox = document.getElementById("searchBox");
+    if (searchBox) {
+        searchBox.addEventListener("keyup", debounce(filterUsers, 300));
+    }
+});
 
 async function loadUsers() {
-
-    const table =
-        document.getElementById(
-            "userTable"
-        );
-
-    showTableLoader(
-        table,
-        7
-    );
-
+    const table = document.getElementById("userTable");
+    if (table) showTableLoader(table, 7);
+    
     try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/users`,
-                {
-                    headers: getAuthHeader()
-                }
-            );
-
+        const response = await fetch(`${API_BASE_URL}/users`, {
+            headers: getAuthHeader()
+        });
+        
         if (!response.ok) {
-
             if (response.status === 401) {
                 logout();
-                throw new Error("Session expired");
+                return;
             }
-
-            throw new Error(
-                "Failed to load users"
-            );
+            throw new Error("Failed to fetch users");
         }
-
-        allUsers =
-            await response.json();
-
-        renderUsers(
-            allUsers
-        );
-    }
-    catch (error) {
-
-        console.error("Error loading users:", error);
-
-        table.innerHTML =
-            emptyTableRow(
-                7,
-                "Unable to load users"
-            );
-
-        showToast(
-            "Unable to load users",
-            "error"
-        );
-    }
-            "error"
-        );
+        
+        allUsers = await response.json();
+        renderUsers(allUsers);
+        
+    } catch (error) {
+        console.error(error);
+        if (table) table.innerHTML = emptyTableRow(7, "Failed to load users");
+        showToast("Failed to load users", "error");
     }
 }
 
-// ======================================
-// RENDER USERS
-// ======================================
-
-function renderUsers(
-    users
-) {
-
-    const table =
-        document.getElementById(
-            "userTable"
-        );
-
-    if (
-        !users ||
-        users.length === 0
-    ) {
-
-        table.innerHTML =
-            emptyTableRow(
-                7,
-                "No users found"
-            );
-
+function renderUsers(users) {
+    const table = document.getElementById("userTable");
+    if (!table) return;
+    
+    if (!users || users.length === 0) {
+        table.innerHTML = emptyTableRow(7, "No users found");
         return;
     }
-
-    table.innerHTML =
-        users.map(
-            user => `
-
+    
+    table.innerHTML = users.map(u => `
         <tr>
-
-            <td>
-                ${user.user_id}
-            </td>
-
-            <td>
-                ${user.emp_id}
-            </td>
-
-            <td>
-                ${user.name}
-            </td>
-
-            <td>
-                ${user.email}
-            </td>
-
-            <td>
-
-                <span class="badge badge-primary">
-
-                    ${user.role}
-
-                </span>
-
-            </td>
-
-            <td>
-                ${user.dept_id}
-            </td>
-
-            <td>
-                ${formatDate(
-                    user.created_at
-                )}
-            </td>
-
+            <td>${u.user_id}</td>
+            <td>${u.emp_id || '-'}</td>
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+            <td><span class="badge ${u.role === 'ADMIN' ? 'badge-primary' : 'badge-available'}">${u.role}</span></td>
+            <td>${u.dept_id || '-'}</td>
+            <td>${formatDate(u.created_at)}</td>
         </tr>
-
-        `
-        ).join("");
+    `).join("");
 }
-
-// ======================================
-// SEARCH
-// ======================================
 
 function filterUsers() {
-
-    const search =
-        document
-            .getElementById(
-                "searchBox"
-            )
-            .value
-            .toLowerCase();
-
-    const filtered =
-        allUsers.filter(
-            user =>
-
-                user.name
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
-
-                user.email
-                    .toLowerCase()
-                    .includes(search)
-
-                ||
-
-                user.emp_id
-                    .toLowerCase()
-                    .includes(search)
-        );
-
-    renderUsers(
-        filtered
+    const search = document.getElementById("searchBox").value.toLowerCase();
+    const filtered = allUsers.filter(u => 
+        (u.name && u.name.toLowerCase().includes(search)) || 
+        (u.emp_id && u.emp_id.toLowerCase().includes(search)) ||
+        (u.email && u.email.toLowerCase().includes(search))
     );
+    renderUsers(filtered);
 }
 
-// ======================================
-// CREATE USER
-// ======================================
-
-async function createUser(
-    event
-) {
-
-    event.preventDefault();
-
+async function createUser(e) {
+    e.preventDefault();
+    
     const payload = {
-
-        emp_id:
-            document
-                .getElementById(
-                    "emp_id"
-                )
-                .value,
-
-        name:
-            document
-                .getElementById(
-                    "name"
-                )
-                .value,
-
-        email:
-            document
-                .getElementById(
-                    "email"
-                )
-                .value,
-
-        password:
-            document
-                .getElementById(
-                    "password"
-                )
-                .value,
-
-        role:
-            document
-                .getElementById(
-                    "role"
-                )
-                .value,
-
-        dept_id:
-            parseInt(
-                document
-                    .getElementById(
-                        "dept_id"
-                    )
-                    .value
-            )
+        emp_id: document.getElementById("emp_id").value,
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+        role: document.getElementById("role").value,
+        dept_id: parseInt(document.getElementById("dept_id").value) || null
     };
-
+    
     try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/users`,
-                {
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json",
-
-                        Authorization:
-                            `Bearer ${token}`
-                    },
-
-                    body:
-                        JSON.stringify(
-                            payload
-                        )
-                }
-            );
-
-        const data =
-            await response.json();
-
+        const response = await fetch(`${API_BASE_URL}/register`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeader()
+            },
+            body: JSON.stringify(payload)
+        });
+        
         if (!response.ok) {
-
-            showToast(
-                data.detail ||
-                "User creation failed",
-                "error"
-            );
-
-            return;
+            const data = await response.json();
+            throw new Error(data.detail || "Failed to create user");
         }
-
-        showToast(
-            "User created successfully"
-        );
-
-        document
-            .getElementById(
-                "userForm"
-            )
-            .reset();
-
+        
+        showToast("User created successfully", "success");
+        document.getElementById("userForm").reset();
         loadUsers();
-    }
-    catch (error) {
-
+        
+    } catch (error) {
         console.error(error);
-
-        showToast(
-            "Unable to create user",
-            "error"
-        );
+        showToast(error.message, "error");
     }
-}
-
-// ======================================
-// ADMIN PROTECTION
-// ======================================
-
-const role =
-    localStorage.getItem(
-        "role"
-    );
-
-if (
-    role !== "ADMIN"
-) {
-
-    showToast(
-        "Access denied",
-        "error"
-    );
-
-    setTimeout(
-        () => {
-
-            window.location.href =
-                "dashboard.html";
-
-        },
-        500
-    );
 }

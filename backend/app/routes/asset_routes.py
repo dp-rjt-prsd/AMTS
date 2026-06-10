@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -20,6 +21,9 @@ from app.utils.qr_handler import generate_qr_code_base64
 
 router = APIRouter()
 
+
+class ScanRequest(BaseModel):
+    asset_id: str
 
 def get_db():
 
@@ -176,7 +180,7 @@ def get_asset(
 
 @router.post("/scan")
 def scan_qr_code(
-    asset_id: str,
+    payload: ScanRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -189,13 +193,13 @@ def scan_qr_code(
 
         # FIND ASSET
         asset = db.query(Asset).filter(
-            Asset.asset_id == asset_id.upper()
+            Asset.asset_id == payload.asset_id.upper()
         ).first()
 
         if not asset:
             raise HTTPException(
                 status_code=404,
-                detail=f"Asset {asset_id} not found"
+                detail=f"Asset {payload.asset_id} not found"
             )
 
         # UPDATE ASSET HOLDER
