@@ -5,6 +5,9 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
 let currentUser = null;
 let currentRole = null;
+let dashboardUsers = [];
+let dashboardStatuses = { 1: "Available", 2: "Assigned", 3: "Repair", 4: "Retired" };
+let dashboardRepairs = [];
 
 // ======================================
 // INITIALIZATION
@@ -33,13 +36,13 @@ document.addEventListener("DOMContentLoaded", () => {
 // ======================================
 
 function applyRoleBasedRender() {
-    const role = localStorage.getItem("role") || "NORMAL_USER";
+    const role = localStorage.getItem("role") || "EMPLOYEE";
     currentRole = role;
 
     console.log("🔍 [DEBUG] Applying role-based rendering for:", role);
 
     // Hide all role-specific sections
-    document.querySelectorAll(".admin-only, .department-head-only, .normal-user-only")
+    document.querySelectorAll(".admin-only, .department-head-only, .employee-only")
         .forEach(el => el.classList.remove("visible"));
 
     // Show appropriate sections
@@ -48,7 +51,7 @@ function applyRoleBasedRender() {
     } else if (role === "DEPARTMENT_HEAD") {
         document.querySelectorAll(".department-head-only").forEach(el => el.classList.add("visible"));
     } else {
-        document.querySelectorAll(".normal-user-only").forEach(el => el.classList.add("visible"));
+        document.querySelectorAll(".employee-only").forEach(el => el.classList.add("visible"));
     }
 
     // Update header title (optional; only if present in the DOM)
@@ -68,7 +71,7 @@ function applyRoleBasedRender() {
 function loadCurrentUser() {
     const userName = localStorage.getItem("user_name") || "User";
     const userId = localStorage.getItem("user_id") || "0";
-    const role = localStorage.getItem("role") || "NORMAL_USER";
+    const role = localStorage.getItem("role") || "EMPLOYEE";
     
     currentUser = {
         name: userName,
@@ -101,7 +104,18 @@ async function loadDashboardData() {
     const loading = document.getElementById("loadingState");
     if (loading) loading.style.display = "block";
     
+    const fetchOpts = { headers: getAuthHeader(), cache: 'no-store' };
     try {
+        // Fetch user and status mappings for charts and tables
+        try {
+            const uRes = await fetch(`${API_BASE_URL}/users`, fetchOpts);
+            if (uRes.ok) dashboardUsers = await uRes.json();
+            const sRes = await fetch(`${API_BASE_URL}/asset-statuses`, fetchOpts);
+            if (sRes.ok) (await sRes.json()).forEach(s => dashboardStatuses[s.status_id] = s.status_name);
+                const rRes = await fetch(`${API_BASE_URL}/repair/logs?limit=200`, fetchOpts).catch(() => null);
+                if (rRes && rRes.ok) dashboardRepairs = await rRes.json();
+        } catch(e) { console.warn("Failed to load mappings"); }
+
         const role = localStorage.getItem("role");
         
         if (role === "ADMIN") {
@@ -111,7 +125,7 @@ async function loadDashboardData() {
             await loadDepartmentHeadData();
         } 
         else {
-            await loadNormalUserData();
+            await loadEmployeeData();
         }
 
         await loadRecentTransfers();
@@ -133,27 +147,41 @@ async function loadDashboardData() {
 
 let statusChartInstance = null;
 
+function getStatusName(asset) {
+    const isActiveRepair = dashboardRepairs.some(r => String(r.asset_id) === String(asset.asset_id) && !r.returned_at);
+    if (isActiveRepair) return "repair";
+
+    const name = asset.status_name || dashboardStatuses[asset.status_id] || "Available";
+    return name.toLowerCase();
+}
+
 function renderStatusChart(assets) {
     const canvas = document.getElementById("assetStatusChart");
     if (!canvas) return;
     if (typeof Chart === "undefined") return;
 
-    const counts = { Available: 0, Assigned: 0, Repair: 0, Retired: 0 };
+    const counts = { available: 0, assigned: 0, repair: 0, retired: 0 };
 
     assets.forEach(a => {
-        const status = a.status_name || "Available";
-        if (counts[status] !== undefined) counts[status]++;
-        else counts[status] = 1;
+        const statusName = getStatusName(a);
+        if (counts[statusName] !== undefined) counts[statusName]++;
     });
+    
+    const displayCounts = {
+        "Available": counts.available,
+        "Assigned": counts.assigned,
+        "Repair": counts.repair,
+        "Retired": counts.retired
+    };
 
     if (statusChartInstance) statusChartInstance.destroy();
 
     statusChartInstance = new Chart(canvas, {
         type: 'doughnut',
         data: {
-            labels: Object.keys(counts),
+            labels: Object.keys(displayCounts),
             datasets: [{
-                data: Object.values(counts),
+                data: Object.values(displayCounts),
                 backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
                 borderWidth: 0
             }]
@@ -169,10 +197,11 @@ function renderStatusChart(assets) {
 async function loadAdminData() {
     console.log("🔍 [DEBUG] Loading admin dashboard data...");
     
+    const fetchOpts = { headers: getAuthHeader(), cache: 'no-store' };
     try {
         const [assetsRes, usersRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/assets?limit=1000`, { headers: getAuthHeader() }),
-            fetch(`${API_BASE_URL}/users`, { headers: getAuthHeader() })
+            fetch(`${API_BASE_URL}/assets?limit=1000`, fetchOpts),
+            fetch(`${API_BASE_URL}/users`, fetchOpts)
         ]);
 
         const assets = assetsRes.ok ? await assetsRes.json() : [];
@@ -181,10 +210,10 @@ async function loadAdminData() {
         document.getElementById("totalAssets").innerText = assets.length || 0;
         document.getElementById("totalUsers").innerText = users.length || 0;
 
-        const repairCount = assets.filter(a => a.status_id === 3 || a.status_name === 'Repair').length;
+        const repairCount = assets.filter(a => getStatusName(a) === 'repair').length;
         document.getElementById("repairAssets").innerText = repairCount;
 
-        const retiredCount = assets.filter(a => a.status_id === 4 || a.status_name === 'Retired').length;
+        const retiredCount = assets.filter(a => getStatusName(a) === 'retired').length;
         const retiredEl = document.getElementById("retiredAssets");
         if (retiredEl) retiredEl.innerText = retiredCount;
 
@@ -204,19 +233,28 @@ async function loadAdminData() {
 async function loadDepartmentHeadData() {
     console.log("🔍 [DEBUG] Loading department head data...");
     
+    const fetchOpts = { headers: getAuthHeader(), cache: 'no-store' };
     try {
         const [assetsRes, usersRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/assets?limit=1000`, { headers: getAuthHeader() }),
-            fetch(`${API_BASE_URL}/users`, { headers: getAuthHeader() })
+            fetch(`${API_BASE_URL}/assets?limit=1000`, fetchOpts),
+            fetch(`${API_BASE_URL}/users`, fetchOpts)
         ]);
 
         const assets = assetsRes.ok ? await assetsRes.json() : [];
         const users = usersRes.ok ? await usersRes.json() : [];
 
-        document.getElementById("deptAssets").innerText = assets.length || 0;
-        document.getElementById("availableAssets").innerText = assets.filter(a => a.status_id === 1 || a.status_name === 'Available').length;
-        document.getElementById("teamMembers").innerText = users.length || 0;
-        document.getElementById("assignedAssets").innerText = assets.filter(a => a.status_id === 2 || a.status_name === 'Assigned').length;
+        // Identify current user's department
+        const currentUserId = localStorage.getItem("user_id");
+        const currentUserObj = users.find(u => String(u.user_id) === String(currentUserId));
+        const currentDeptId = currentUserObj ? currentUserObj.dept_id : null;
+
+        // Filter team members based on department ID
+        const teamMembers = currentDeptId ? users.filter(u => String(u.dept_id) === String(currentDeptId)) : [];
+
+        document.getElementById("dhDeptAssets").innerText = assets.length || 0;
+        document.getElementById("dhAvailableAssets").innerText = assets.filter(a => getStatusName(a) === 'available').length;
+        document.getElementById("dhTeamMembers").innerText = teamMembers.length || 0;
+        document.getElementById("dhAssignedAssets").innerText = assets.filter(a => getStatusName(a) === 'assigned').length;
 
         renderStatusChart(assets);
 
@@ -228,29 +266,30 @@ async function loadDepartmentHeadData() {
 }
 
 // ======================================
-// NORMAL USER DATA
+// EMPLOYEE DATA
 // ======================================
 
-async function loadNormalUserData() {
-    console.log("🔍 [DEBUG] Loading normal user data...");
+async function loadEmployeeData() {
+    console.log("🔍 [DEBUG] Loading employee data...");
     
+    const fetchOpts = { headers: getAuthHeader(), cache: 'no-store' };
     try {
         const userId = localStorage.getItem("user_id");
         
-        const assetsRes = await fetch(`${API_BASE_URL}/assets?limit=1000`, { headers: getAuthHeader() });
+        const assetsRes = await fetch(`${API_BASE_URL}/assets?limit=1000`, fetchOpts);
         if (!assetsRes.ok) throw new Error("Failed to fetch assets");
         const assets = await assetsRes.json();
         
         const userAssets = assets.filter(a => String(a.current_holder_id) === String(userId));
-        document.getElementById("myAssets").innerText = userAssets.length || 0;
+        document.getElementById("empMyAssets").innerText = userAssets.length || 0;
         
-        const myRepairs = userAssets.filter(a => a.status_id === 3 || a.status_name === 'Repair').length;
-        document.getElementById("myRepairs").innerText = myRepairs;
+        const myRepairs = userAssets.filter(a => getStatusName(a) === 'repair').length;
+        document.getElementById("empMyRepairs").innerText = myRepairs;
 
-        document.getElementById("availableAssets").innerText = assets.filter(a => a.status_id === 1 || a.status_name === 'Available').length;
-        const assignedEl = document.getElementById("assignedAssets");
+        document.getElementById("empAvailableAssets").innerText = assets.filter(a => getStatusName(a) === 'available').length;
+        const assignedEl = document.getElementById("empAssignedAssets");
         if (assignedEl) {
-            assignedEl.innerText = assets.filter(a => a.status_id === 2 || a.status_name === 'Assigned').length;
+            assignedEl.innerText = assets.filter(a => getStatusName(a) === 'assigned').length;
         }
         
         renderStatusChart(assets);
@@ -267,10 +306,9 @@ async function loadNormalUserData() {
 // ======================================
 
 async function loadRecentTransfers() {
+    const fetchOpts = { headers: getAuthHeader(), cache: 'no-store' };
     try {
-        const response = await fetch(`${API_BASE_URL}/transfers?limit=5`, {
-            headers: getAuthHeader()
-        });
+        const response = await fetch(`${API_BASE_URL}/transfers?limit=5`, fetchOpts);
         
         if (!response.ok) return;
         const transfers = await response.json();
@@ -281,8 +319,8 @@ async function loadRecentTransfers() {
                 <tr>
                     <td>${t.transfer_id || '-'}</td>
                     <td>${t.asset_id || '-'}</td>
-                    <td>${t.from_user_name || '-'}</td>
-                    <td>${t.to_user_name || '-'}</td>
+                    <td>${(dashboardUsers.find(u => u.user_id === t.from_user_id) || {name: t.from_user_name || '-'}).name}</td>
+                    <td>${(dashboardUsers.find(u => u.user_id === t.to_user_id) || {name: t.to_user_name || '-'}).name}</td>
                     <td>${formatDate(t.transferred_at) || '-'}</td>
                 </tr>
             `).join('');

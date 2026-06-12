@@ -290,6 +290,16 @@ a {
 }
 
 /* =====================================================
+   ROLE-BASED SECTIONS
+===================================================== */
+.role-section {
+    display: none;
+}
+.role-section.visible {
+    display: contents; /* Allows internal cards to join the parent grid */
+}
+
+/* =====================================================
    CARDS
 ===================================================== */
 

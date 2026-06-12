@@ -59,14 +59,40 @@ async function startCamera() {
     }
 
     try {
-        videoStream = await navigator.mediaDevices.getUserMedia({
-            video: true
-        });
+        let constraints = { video: { facingMode: "user" } }; // Default to physical to prevent green virtual screen
+        const cameraSelect = document.getElementById("cameraSelect");
+
+        // Use selected camera if available
+        if (cameraSelect && cameraSelect.value) {
+            constraints = { video: { deviceId: { exact: cameraSelect.value } } };
+        }
+
+        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
 
         video.setAttribute("playsinline", "true");
         video.setAttribute("muted", "true");
         video.srcObject = videoStream;
         video.style.display = "block";
+
+        // Populate camera selector dropdown
+        if (cameraSelect && cameraSelect.options.length === 0) {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === "videoinput");
+            
+            if (videoDevices.length > 1) {
+                cameraSelect.style.display = "block";
+                cameraSelect.innerHTML = videoDevices.map((cam, i) => 
+                    `<option value="${cam.deviceId}">${cam.label || 'Camera ' + (i + 1)}</option>`
+                ).join('');
+                
+                // Set dropdown to currently active camera
+                const activeTrack = videoStream.getVideoTracks()[0];
+                if (activeTrack) {
+                    const activeId = activeTrack.getSettings().deviceId;
+                    if (activeId) cameraSelect.value = activeId;
+                }
+            }
+        }
 
         // Wait for the video feed metadata to load before playing
         video.onloadedmetadata = async () => {
@@ -105,6 +131,13 @@ function stopCamera() {
     video.srcObject = null;
     scanBtn.innerText = "Start Camera";
     scanningActive = false;
+}
+
+async function switchCamera() {
+    if (scanningActive) {
+        stopCamera();
+        await startCamera();
+    }
 }
 
 function scanQRFromVideo() {
@@ -213,36 +246,9 @@ async function handleScannedQR(qrData) {
         // QR data should be the asset ID
         const assetId = qrData.trim().toUpperCase();
 
-        // Fetch asset details
-        const response = await fetch(`${API_BASE_URL}/assets/${assetId}`, {
-            headers: getAuthHeader(),
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                logout();
-                throw new Error("Session expired");
-            }
-
-            if (response.status === 404) {
-                showResult(
-                    "cameraResult",
-                    "error",
-                    `Asset ${assetId} not found`
-                );
-                return;
-            }
-
-            throw new Error("Failed to fetch asset");
-        }
-
-        const asset = await response.json();
-
-        // Store for confirmation
-        currentScannedAsset = asset;
-
-        // Show confirmation modal
-        showConfirmationModal(asset);
+        // Redirect immediately to full asset details
+        window.location.href = `asset_details.html?asset_id=${assetId}`;
+        
     } catch (error) {
         console.error("Error handling QR:", error);
 
@@ -251,86 +257,6 @@ async function handleScannedQR(qrData) {
             "error",
             "Error processing QR code"
         );
-    }
-}
-
-// ======================================
-// CONFIRMATION MODAL
-// ======================================
-
-function showConfirmationModal(asset) {
-    document.getElementById("modalAssetId").innerText = asset.asset_id;
-    document.getElementById("modalAssetName").innerText = asset.asset_name;
-
-    document.getElementById("confirmModal").classList.add("show");
-}
-
-function closeModal() {
-    document.getElementById("confirmModal").classList.remove("show");
-}
-
-async function confirmCheckout() {
-    if (!currentScannedAsset) return;
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/scan`, {
-            method: "POST",
-            headers: {
-                ...getAuthHeader(),
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                asset_id: currentScannedAsset.asset_id,
-            }),
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                logout();
-                throw new Error("Session expired");
-            }
-
-            throw new Error("Checkout failed");
-        }
-
-        const result = await response.json();
-
-        closeModal();
-
-        showToast(result.message, "success");
-
-        // Show success result
-        showResult(
-            "cameraResult",
-            "success",
-            `<strong>✓ Checkout Successful!</strong>
-            <div class="result-detail">
-                <span>Asset ID:</span>
-                <span>${result.asset.asset_id}</span>
-            </div>
-            <div class="result-detail">
-                <span>Asset Name:</span>
-                <span>${result.asset.asset_name}</span>
-            </div>
-            <div class="result-detail">
-                <span>Assigned to:</span>
-                <span>${result.asset.holder_name}</span>
-            </div>`
-        );
-
-        // Reset for next scan
-        currentScannedAsset = null;
-
-        setTimeout(() => {
-            document.getElementById("imageInput").value = "";
-            // Can optionally restart camera here
-        }, 2000);
-    } catch (error) {
-        console.error("Error during checkout:", error);
-
-        showToast("Checkout failed: " + error.message, "error");
-
-        closeModal();
     }
 }
 

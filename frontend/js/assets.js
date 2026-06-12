@@ -2,26 +2,22 @@ const API_BASE_URL =
     "http://127.0.0.1:8000";
 
 let allAssets = [];
+let globalStatuses = [];
+let globalUsers = [];
 
 // ======================================
 // INIT
 // ======================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!requireAuth()) return;
 
-        if (!requireAuth()) {
-            return;
-        }
+    applyRoleRules();
+    loadCurrentUser();
 
-        applyRoleRules();
-
-        loadCurrentUser();
-
-        loadAssets();
-
-        loadDropdowns();
+    // Load mappings before loading assets
+    await loadDropdowns();
+    await loadAssets();
 
         const assetForm = document.getElementById("assetForm");
         if (assetForm) {
@@ -64,6 +60,9 @@ async function loadDropdowns() {
                 return [];
             })
         ]);
+
+        globalStatuses = statuses;
+        globalUsers = users;
 
         populateSelect(
             "asset_type_id",
@@ -158,6 +157,17 @@ async function loadAssets() {
             await fetchData(
                 "/assets"
             );
+
+        // Map IDs to actual names for the table
+        allAssets = allAssets.map(asset => {
+            const statusObj = globalStatuses.find(s => s.status_id === asset.status_id);
+            const userObj = globalUsers.find(u => u.user_id === asset.current_holder_id);
+            return {
+                ...asset,
+                status_name: asset.status_name || (statusObj ? statusObj.status_name : "Unknown"),
+                holder_name: asset.holder_name || (userObj ? userObj.name : "-")
+            };
+        });
 
         renderAssets(
             allAssets
@@ -403,9 +413,15 @@ async function createAsset(
 
         if (!response.ok) {
 
+            let errorMsg = data.detail || "Asset creation failed";
+            
+            // Handle FastAPI validation error array gracefully
+            if (Array.isArray(data.detail)) {
+                errorMsg = data.detail.map(e => `${e.loc[e.loc.length-1]}: ${e.msg}`).join(", ");
+            }
+
             showToast(
-                data.detail ||
-                "Asset creation failed",
+                errorMsg,
                 "error"
             );
 
@@ -424,6 +440,18 @@ async function createAsset(
 
         loadAssets();
 
+        // Show QR Code modal
+        if (data.qr_code) {
+            showQRModal(data);
+        } else {
+            // Fetch full asset details to get the QR code if not in the initial POST response
+            fetchData(`/assets/${payload.asset_id}`).then(assetDetails => {
+                if (assetDetails && assetDetails.qr_code) {
+                    showQRModal(assetDetails);
+                }
+            }).catch(e => console.error("Could not fetch QR code:", e));
+        }
+
     }
     catch (error) {
 
@@ -440,6 +468,39 @@ async function createAsset(
 // HELPER
 // ======================================
 
+function showQRModal(asset) {
+    const modal = document.getElementById("qrModal");
+    if (!modal) return;
+    
+    document.getElementById("qrModalImage").src = asset.qr_code;
+    document.getElementById("qrModalAssetId").innerText = asset.asset_id;
+    document.getElementById("qrModalAssetName").innerText = asset.asset_name;
+    
+    modal.classList.add("show");
+}
+
+function printCreatedQR() {
+    const qrSrc = document.getElementById("qrModalImage").src;
+    const assetId = document.getElementById("qrModalAssetId").innerText;
+    
+    const printWindow = window.open('', '', 'width=600,height=600');
+    printWindow.document.write(`
+        <html>
+            <head><title>Print QR - ${assetId}</title></head>
+            <body style="text-align:center; padding:50px; font-family:sans-serif;">
+                <h2>${assetId}</h2>
+                <img src="${qrSrc}" style="width:300px; height:300px; margin-top: 20px;">
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+}
+
 async function fetchData(
     endpoint
 ) {
@@ -450,7 +511,8 @@ async function fetchData(
             await fetch(
                 `${API_BASE_URL}${endpoint}`,
                 {
-                    headers: getAuthHeader()
+                            headers: getAuthHeader(),
+                            cache: "no-store"
                 }
             );
 

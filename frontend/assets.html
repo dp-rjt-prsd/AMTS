@@ -288,6 +288,22 @@
 
 </div>
 
+<!-- QR MODAL -->
+<div id="qrModal" class="modal">
+    <div class="modal-content">
+        <h2>Asset Created!</h2>
+        <div class="qr-display" style="margin-top: 20px; text-align: center;">
+            <img id="qrModalImage" class="qr-image" src="" alt="QR Code" style="max-width: 200px; margin: 0 auto; display: block;">
+            <div style="margin-top: 10px; font-weight: bold; font-size: 18px;" id="qrModalAssetId"></div>
+            <div style="color: var(--muted); margin-bottom: 20px;" id="qrModalAssetName"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-print" onclick="printCreatedQR()">🖨️ Print QR</button>
+            <button class="btn btn-cancel" onclick="document.getElementById('qrModal').classList.remove('show')">Close</button>
+        </div>
+    </div>
+</div>
+
 <script src="js/utils.js"></script>
 <script>requireAuth();</script>
 <script src="js/assets.js"></script>

@@ -6,6 +6,7 @@ from app.database import SessionLocal
 
 from app.models.asset import Asset
 from app.models.repair_log import RepairLog
+from app.models.asset_status import AssetStatus
 
 from app.auth.auth_bearer import get_current_user, require_admin
 
@@ -47,7 +48,21 @@ def send_for_repair(
                 detail=f"Asset {asset_id} not found"
             )
 
-        asset.status_id = 3
+        # Dynamically find the "Repair" status in the database
+        try:
+            columns = AssetStatus.__table__.columns.keys()
+            id_col = next((c for c in columns if c.endswith("id")), columns[0])
+            name_col = next((c for c in columns if "name" in c or "desc" in c or "status" in c and c != id_col), columns[1] if len(columns) > 1 else columns[0])
+        except Exception:
+            id_col = "status_id"
+            name_col = "status_name"
+            
+        repair_status = db.query(AssetStatus).filter(getattr(AssetStatus, name_col).ilike("repair")).first()
+        if repair_status:
+            asset.status_id = getattr(repair_status, id_col)
+            
+        # Retain the current_holder_id so the employee keeps ownership during repair
+        db.add(asset)
 
         repair_log = RepairLog(
             asset_id=asset_id.upper(),
@@ -109,7 +124,20 @@ def return_from_repair(
         ).first()
 
         if asset:
-            asset.status_id = 1
+            # Dynamically find the "Available" status in the database
+            try:
+                columns = AssetStatus.__table__.columns.keys()
+                id_col = next((c for c in columns if c.endswith("id")), columns[0])
+                name_col = next((c for c in columns if "name" in c or "desc" in c or "status" in c and c != id_col), columns[1] if len(columns) > 1 else columns[0])
+            except Exception:
+                id_col = "status_id"
+                name_col = "status_name"
+                
+            available_status = db.query(AssetStatus).filter(getattr(AssetStatus, name_col).ilike("available")).first()
+            if available_status:
+                asset.status_id = getattr(available_status, id_col)
+
+            db.add(asset)
 
         db.commit()
 
@@ -192,4 +220,3 @@ def get_asset_repairs(
             status_code=500,
             detail="Error fetching repair history"
         )
-

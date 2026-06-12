@@ -91,6 +91,14 @@
                 Back
             </button>
 
+            <button id="retireBtn" class="admin-only" onclick="retireAsset()" style="background: var(--warning); margin-left: 10px; color: #fff;">
+                Retire
+            </button>
+
+            <button id="deleteBtn" class="admin-only" onclick="deleteAsset()" style="background: var(--danger); margin-left: 10px;">
+                Delete
+            </button>
+
         </header>
 
         <main class="page-content">
@@ -317,6 +325,30 @@
 <script src="js/utils.js"></script>
 <script>requireAuth();</script>
 <script src="js/asset_details.js"></script>
+<script>
+    async function deleteAsset() {
+        if (!confirm("Are you sure you want to delete this asset? This cannot be undone.")) return;
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const assetId = urlParams.get('asset_id');
+        
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/assets/${assetId}`, {
+                method: 'DELETE',
+                headers: getAuthHeader()
+            });
+            
+            if (response.ok) {
+                showToast("Asset deleted successfully", "success");
+                setTimeout(() => window.location.href = 'assets.html', 1000);
+            } else {
+                showToast("Error deleting asset - Check constraints", "error");
+            }
+        } catch (error) {
+            showToast("Error deleting asset", "error");
+        }
+    }
+</script>
 
 </body>
 

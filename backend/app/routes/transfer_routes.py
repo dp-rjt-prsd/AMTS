@@ -104,7 +104,22 @@ def get_transfers(
             AssetTransferLog.transferred_at.desc()
         ).offset(skip).limit(limit).all()
 
-        return transfers
+        # Fetch users to map IDs to names
+        users = {u.user_id: u.name for u in db.query(User).all()}
+
+        return [
+            {
+                "transfer_id": t.transfer_id,
+                "asset_id": t.asset_id,
+                "from_user_id": t.from_user_id,
+                "to_user_id": t.to_user_id,
+                "from_user_name": users.get(t.from_user_id, "Unknown"),
+                "to_user_name": users.get(t.to_user_id, "Unknown"),
+                "remarks": t.remarks,
+                "transferred_at": t.transferred_at
+            }
+            for t in transfers
+        ]
 
     except Exception as e:
         raise HTTPException(
@@ -143,7 +158,22 @@ def get_asset_transfer_history(
             AssetTransferLog.transferred_at.desc()
         ).offset(skip).limit(limit).all()
 
-        return transfers
+        # Fetch users to map IDs to names
+        users = {u.user_id: u.name for u in db.query(User).all()}
+
+        return [
+            {
+                "transfer_id": t.transfer_id,
+                "asset_id": t.asset_id,
+                "from_user_id": t.from_user_id,
+                "to_user_id": t.to_user_id,
+                "from_user_name": users.get(t.from_user_id, "Unknown"),
+                "to_user_name": users.get(t.to_user_id, "Unknown"),
+                "remarks": t.remarks,
+                "transferred_at": t.transferred_at
+            }
+            for t in transfers
+        ]
 
     except HTTPException:
         raise

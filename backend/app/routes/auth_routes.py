@@ -36,7 +36,7 @@ def register(
     - **name**: Full name (required, 2-100 chars)
     - **email**: User email (required)
     - **password**: Password (required, min 8 chars)
-    - **role**: User role (ADMIN, DEPARTMENT_HEAD, NORMAL_USER) - defaults to NORMAL_USER
+    - **role**: User role (ADMIN, DEPARTMENT_HEAD, EMPLOYEE) - defaults to EMPLOYEE
     - **dept_id**: Department ID (optional)
     """
     
@@ -57,7 +57,7 @@ def register(
         )
     
     # VALIDATE ROLE
-    valid_roles = ["ADMIN", "DEPARTMENT_HEAD", "NORMAL_USER"]
+    valid_roles = ["ADMIN", "DEPARTMENT_HEAD", "EMPLOYEE"]
     if user.role not in valid_roles:
         raise HTTPException(
             status_code=400,

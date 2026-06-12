@@ -54,6 +54,13 @@
                         <!-- CAMERA TAB -->
                         <div id="camera" class="tab-content active">
                             <div class="scanner-content">
+                                <select 
+                                    id="cameraSelect" 
+                                    style="display: none; padding: 12px; border-radius: 8px; background: var(--surface-card); color: var(--text-primary); border: 1px solid var(--border-color); cursor: pointer;" 
+                                    onchange="switchCamera()"
+                                >
+                                </select>
+
                                 <video
                                     id="video"
                                     width="100%"

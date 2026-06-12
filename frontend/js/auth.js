@@ -233,6 +233,9 @@ async function register(
         document
             .getElementById("role")
             .value;
+            
+    const dept_id_el = document.getElementById("dept_id");
+    const dept_id = dept_id_el && dept_id_el.value ? parseInt(dept_id_el.value) : null;
 
     try {
 
@@ -254,7 +257,7 @@ async function register(
                             email,
                             password,
                             role,
-                            dept_id: null
+                            dept_id
                         })
                 }
             );

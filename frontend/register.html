@@ -172,9 +172,49 @@
                         cursor: pointer;
                     "
                 >
-                    <option value="NORMAL_USER">Normal User</option>
+                    <option value="EMPLOYEE">Employee</option>
                     <option value="DEPARTMENT_HEAD">Department Head</option>
                     <!-- Admin role requires manual setup -->
+                </select>
+
+            </div>
+
+            <div style="margin-top:16px;">
+
+                <label
+                    for="dept_id"
+                    style="
+                        display:block;
+                        margin-bottom:8px;
+                        font-weight:500;
+                    "
+                >
+                    Department
+                </label>
+
+                <select
+                    id="dept_id"
+                    required
+                    style="
+                        width: 100%;
+                        padding: 10px;
+                        border-radius: 4px;
+                        border: 1px solid var(--border-color);
+                        background-color: var(--bg-secondary);
+                        color: var(--text-primary);
+                        font-size: 14px;
+                        cursor: pointer;
+                    "
+                >
+                    <option value="" disabled selected>Select Department</option>
+                    <option value="1">Department 1</option>
+                    <option value="2">Department 2</option>
+                    <option value="3">Department 3</option>
+                    <option value="4">Department 4</option>
+                    <option value="5">Department 5</option>
+                    <option value="6">Department 6</option>
+                    <option value="7">Department 7</option>
+                    <option value="8">Department 8</option>
                 </select>
 
             </div>

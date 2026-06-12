@@ -223,3 +223,28 @@ function printQRForAsset() {
         printWindow.print();
     }, 250);
 }
+
+// ======================================
+// RETIRE ASSET
+// ======================================
+
+async function retireAsset() {
+    if (!confirm("Are you sure you want to retire this asset?")) return;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/assets/${assetId}/retire`, {
+            method: 'PUT',
+            headers: getAuthHeader()
+        });
+        
+        if (response.ok) {
+            showToast("Asset retired successfully", "success");
+            loadAsset(); // Refresh the details on the page
+        } else {
+            const data = await response.json();
+            showToast(data.detail || "Error retiring asset", "error");
+        }
+    } catch (error) {
+        showToast("Error retiring asset", "error");
+    }
+}
