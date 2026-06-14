@@ -16,9 +16,6 @@ venv/
 # PyCharm
 .idea/
 
-# MySQL dumps
-*.sql
-
 # Logs
 *.log
 
