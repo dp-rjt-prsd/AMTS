@@ -2,353 +2,175 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>
-        Asset Details
-    </title>
-
+    <title>Asset Details - AMTS</title>
     <link rel="stylesheet" href="css/style.css">
-
 </head>
 
 <body>
 
-<div class="app-layout">
-
-    <!-- SIDEBAR -->
-
-    <aside class="sidebar" id="sidebar">
-
-        <div class="sidebar-header">
-                AMTS
+    <noscript>
+        <div class="noscript-banner">
+            This application requires JavaScript. Please enable it in your browser settings,
+            then reload this page.
         </div>
+    </noscript>
 
-        <div class="sidebar-user">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-            <div id="sidebarUserName">
-                User
+    <div class="app-layout">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">AMTS</div>
+
+            <div class="sidebar-user">
+                <div id="sidebarUserName">User</div>
+                <small id="sidebarUserRole">Employee</small>
             </div>
 
-            <small id="sidebarUserRole">
-                Employee
-            </small>
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="assets.html">Assets</a>
+                <a href="transfers.html">Transfers</a>
+                <a href="repairs.html">Repairs</a>
+                <a href="qr_scan.html">QR Scanner</a>
+                <a href="users.html" class="admin-only">Users</a>
+                <button type="button" class="logout" onclick="logout()">Logout</button>
+            </nav>
+        </aside>
 
-        </div>
+        <div class="main-area">
 
-        <nav class="sidebar-nav">
+            <header class="topbar">
+                <button
+                    type="button"
+                    class="menu-toggle"
+                    data-sidebar-toggle
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation menu"
+                    onclick="toggleSidebar()"
+                >☰</button>
 
-            <a href="dashboard.html">
-                Dashboard
-            </a>
+                <h2>Asset Details</h2>
 
-            <a href="assets.html" class="active">
-                Assets
-            </a>
+                <a href="assets.html" class="topbar-link">Back to assets</a>
+            </header>
 
-            <a href="transfers.html">
-                Transfers
-            </a>
+            <main class="page-content" id="main-content">
 
-            <a href="repairs.html">
-                Repairs
-            </a>
+                <h1 class="page-title" id="assetName">Asset</h1>
 
-            <a href="qr_scan.html">
-                QR Scanner
-            </a>
-
-            <a href="users.html" class="admin-only">
-                Users
-            </a>
-
-            <a href="#" class="logout" onclick="logout()">
-                Logout
-            </a>
-
-        </nav>
-
-    </aside>
-
-    <!-- MAIN -->
-
-    <div class="main-area">
-
-        <header class="topbar">
-
-            <div class="menu-toggle" onclick="toggleSidebar()">
-                ☰
-            </div>
-
-            <h2>
-                Asset Details
-            </h2>
-
-            <button onclick="window.location.href='assets.html'">
-                Back
-            </button>
-
-            <button id="retireBtn" class="admin-only" onclick="retireAsset()" style="background: var(--warning); margin-left: 10px; color: #fff;">
-                Retire
-            </button>
-
-            <button id="deleteBtn" class="admin-only" onclick="deleteAsset()" style="background: var(--danger); margin-left: 10px;">
-                Delete
-            </button>
-
-        </header>
-
-        <main class="page-content">
-
-            <!-- ASSET SUMMARY -->
-
-            <section class="card" style="margin-bottom:24px;">
-
-                <h2 id="assetName" style="margin-bottom:12px;">
-                    Loading...
-                </h2>
-
-                <p style="color:var(--muted); margin-bottom:24px;">
-                    Asset ID:
-                    <strong id="assetId">-</strong>
+                <p class="page-subtitle">
+                    Asset ID: <strong id="assetId">-</strong>
                 </p>
 
-                <div class="card-container">
+                <section class="card">
 
-                    <div>
+                    <h2>Details</h2>
 
-                        <h4>Status</h4>
+                    <!-- dl is the right element for name/value pairs -->
+                    <dl class="detail-grid">
+                        <div>
+                            <dt>Status</dt>
+                            <dd id="assetStatus">-</dd>
+                        </div>
+                        <div>
+                            <dt>Current Holder</dt>
+                            <dd id="currentHolder">-</dd>
+                        </div>
+                        <div>
+                            <dt>Asset Type</dt>
+                            <dd id="assetType">-</dd>
+                        </div>
+                        <div>
+                            <dt>Serial Number</dt>
+                            <dd id="serialNumber">-</dd>
+                        </div>
+                        <div>
+                            <dt>Price</dt>
+                            <dd id="price">-</dd>
+                        </div>
+                        <div>
+                            <dt>Procured By</dt>
+                            <dd id="procurementBy">-</dd>
+                        </div>
+                        <div>
+                            <dt>Purchase Order</dt>
+                            <dd id="purchaseOrderId">-</dd>
+                        </div>
+                        <div>
+                            <dt>Remarks</dt>
+                            <dd id="remarks">-</dd>
+                        </div>
+                    </dl>
 
-                        <div id="assetStatus">-</div>
-
+                    <div class="detail-actions admin-only">
+                        <button type="button" id="retireBtn" class="btn btn-danger">
+                            Retire Asset
+                        </button>
                     </div>
 
-                    <div>
+                </section>
 
-                        <h4>Current Holder</h4>
+                <section class="card">
+                    <h2>QR Code</h2>
 
-                        <p id="currentHolder">-</p>
-
+                    <div class="qr-display">
+                        <img id="assetQRCode" class="qr-image" src="" alt="">
+                        <button type="button" id="printQrBtn" class="btn btn-print">
+                            Print QR Code
+                        </button>
                     </div>
+                </section>
 
-                    <div>
+                <section>
+                    <h2>Transfer History</h2>
 
-                        <h4>Asset Type</h4>
-
-                        <p id="assetType">-</p>
-
+                    <div class="table-wrapper">
+                        <table class="responsive-table">
+                            <caption class="visually-hidden">Transfer history for this asset</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">From</th>
+                                    <th scope="col">To</th>
+                                    <th scope="col">Remarks</th>
+                                    <th scope="col">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transferHistory"></tbody>
+                        </table>
                     </div>
+                </section>
 
-                    <div>
+                <section>
+                    <h2>Repair History</h2>
 
-                        <h4>Serial Number</h4>
-
-                        <p id="serialNumber">-</p>
-
+                    <div class="table-wrapper">
+                        <table class="responsive-table">
+                            <caption class="visually-hidden">Repair history for this asset</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Issue</th>
+                                    <th scope="col">Sent</th>
+                                    <th scope="col">Returned</th>
+                                </tr>
+                            </thead>
+                            <tbody id="repairHistory"></tbody>
+                        </table>
                     </div>
+                </section>
 
-                    <div>
-
-                        <h4>Price</h4>
-
-                        <p id="price">-</p>
-
-                    </div>
-
-                    <div>
-
-                        <h4>Remarks</h4>
-
-                        <p id="remarks">-</p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            <!-- QR CODE SECTION -->
-
-            <section class="card" style="margin-bottom:24px;">
-
-                <h2 style="margin-bottom:16px;">
-                    QR Code
-                </h2>
-
-                <div
-                    style="
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 16px;
-                    "
-                >
-
-                    <img
-                        id="assetQRCode"
-                        style="
-                            max-width: 300px;
-                            width: 100%;
-                            border: 2px solid var(--qr-accent);
-                            border-radius: 8px;
-                            padding: 12px;
-                            background: white;
-                        "
-                        alt="QR Code"
-                    />
-
-                    <button
-                        onclick="printQRForAsset()"
-                        style="
-                            padding: 10px 20px;
-                            background: var(--primary);
-                            color: white;
-                            border: none;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 14px;
-                            font-weight: 500;
-                        "
-                    >
-                        🖨️ Print QR Code
-                    </button>
-
-                </div>
-
-            </section>
-
-            <!-- TRANSFER HISTORY -->
-
-            <section style="margin-bottom:24px;">
-
-                <h2 style="margin-bottom:16px;">
-                    Transfer History
-                </h2>
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                        <tr>
-
-                            <th>
-                                Transfer ID
-                            </th>
-
-                            <th>
-                                From User
-                            </th>
-
-                            <th>
-                                To User
-                            </th>
-
-                            <th>
-                                Remarks
-                            </th>
-
-                            <th>
-                                Date
-                            </th>
-
-                        </tr>
-
-                        </thead>
-
-                        <tbody id="transferHistory">
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
-
-            <!-- REPAIR HISTORY -->
-
-            <section>
-
-                <h2 style="margin-bottom:16px;">
-                    Repair History
-                </h2>
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                        <tr>
-
-                            <th>
-                                Repair ID
-                            </th>
-
-                            <th>
-                                Issue
-                            </th>
-
-                            <th>
-                                Sent At
-                            </th>
-
-                            <th>
-                                Returned At
-                            </th>
-
-                        </tr>
-
-                        </thead>
-
-                        <tbody id="repairHistory">
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
-
-        </main>
-
+            </main>
+        </div>
     </div>
 
-</div>
-
-<script src="js/utils.js"></script>
-<script>requireAuth();</script>
-<script src="js/asset_details.js"></script>
-<script>
-    async function deleteAsset() {
-        if (!confirm("Are you sure you want to delete this asset? This cannot be undone.")) return;
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const assetId = urlParams.get('asset_id');
-        
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/assets/${assetId}`, {
-                method: 'DELETE',
-                headers: getAuthHeader()
-            });
-            
-            if (response.ok) {
-                showToast("Asset deleted successfully", "success");
-                setTimeout(() => window.location.href = 'assets.html', 1000);
-            } else {
-                showToast("Error deleting asset - Check constraints", "error");
-            }
-        } catch (error) {
-            showToast("Error deleting asset", "error");
-        }
-    }
-</script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/asset_details.js"></script>
 
 </body>
 

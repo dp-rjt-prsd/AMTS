@@ -1,159 +1,189 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Scan QR Code - AMTS</title>
-        <link rel="stylesheet" href="css/style.css" />
-    </head>
+<html lang="en">
 
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner - AMTS</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
 
-        <div class="app-layout">
+<body>
 
-            <!-- SIDEBAR -->
-            <aside class="sidebar" id="sidebar">
-                <div class="sidebar-header">AMTS</div>
-                <div class="sidebar-user">
-                    <div id="sidebarUserName">User</div>
-                    <small id="sidebarUserRole">Employee</small>
-                </div>
-                <nav class="sidebar-nav">
-                    <a href="dashboard.html">Dashboard</a>
-                    <a href="assets.html">Assets</a>
-                    <a href="transfers.html">Transfers</a>
-                    <a href="repairs.html">Repairs</a>
-                    <a href="qr_scan.html" class="active">QR Scanner</a>
-                    <a href="users.html" class="admin-only">Users</a>
-                    <a href="#" class="logout" onclick="logout()">Logout</a>
-                </nav>
-            </aside>
-
-            <!-- MAIN -->
-            <div class="main-area">
-
-                <header class="topbar">
-                    <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
-                    <h2>QR Scanner</h2>
-                </header>
-
-                <main class="page-content">
-                    <div class="qr-container">
-                        <h1>QR Code Asset Scanner</h1>
-
-                        <!-- TABS -->
-                        <div class="tab-buttons">
-                            <button class="tab-btn active" onclick="switchTab('camera')">
-                                Camera
-                            </button>
-                            <button class="tab-btn" onclick="switchTab('upload')">
-                                Upload Image
-                            </button>
-                        </div>
-
-                        <!-- CAMERA TAB -->
-                        <div id="camera" class="tab-content active">
-                            <div class="scanner-content">
-                                <select 
-                                    id="cameraSelect" 
-                                    style="display: none; padding: 12px; border-radius: 8px; background: var(--surface-card); color: var(--text-primary); border: 1px solid var(--border-color); cursor: pointer;" 
-                                    onchange="switchCamera()"
-                                >
-                                </select>
-
-                                <video
-                                    id="video"
-                                    width="100%"
-                                    height="400"
-                                    style="display: none"
-                                    autoplay
-                                    playsinline
-                                    muted
-                                ></video>
-
-                                <button id="scanBtn" onclick="startCamera()">
-                                    Start Camera
-                                </button>
-
-                                <div id="cameraResult" class="result-box">
-                                    <div class="result-content"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- UPLOAD TAB -->
-                        <div id="upload" class="tab-content">
-                            <div class="scanner-content">
-                                <div class="control-group" style="margin-bottom: 12px;">
-                                    <label style="display:block; margin-bottom:8px; color:var(--text-secondary);">Select Image</label>
-                                    <input
-                                        type="file"
-                                        id="imageInput"
-                                        accept="image/*"
-                                    />
-                                </div>
-
-                                <canvas
-                                    id="canvas"
-                                    style="display: none"
-                                ></canvas>
-
-                                <button
-                                    id="uploadBtn"
-                                    onclick="uploadImage()"
-                                >
-                                    Scan Image
-                                </button>
-
-                                <div id="uploadResult" class="result-box">
-                                    <div class="result-content"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- CONFIRMATION MODAL -->
-                    <div id="confirmModal" class="modal">
-                        <div class="modal-content">
-                            <h2>Confirm Checkout</h2>
-                            <div class="asset-info">
-                                <div>
-                                    <span class="label">Asset ID:</span>
-                                    <span class="value" id="modalAssetId"></span>
-                                </div>
-                                <div>
-                                    <span class="label">Asset Name:</span>
-                                    <span class="value" id="modalAssetName"></span>
-                                </div>
-                                <div>
-                                    <span class="label" style="width: 100%; display: block; margin-top: 10px;">
-                                        Assign this to you?
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="modal-actions">
-                                <button
-                                    class="btn btn-confirm"
-                                    onclick="confirmCheckout()"
-                                >
-                                    Confirm
-                                </button>
-                                <button
-                                    class="btn btn-cancel"
-                                    onclick="closeModal()"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </main>
-            </div>
+    <noscript>
+        <div class="noscript-banner">
+            This application requires JavaScript. Please enable it in your browser settings,
+            then reload this page.
         </div>
+    </noscript>
 
-        <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-        <script src="js/utils.js"></script>
-        <script>requireAuth();</script>
-        <script src="js/qr_scanner.js"></script>
-    </body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="app-layout">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">AMTS</div>
+
+            <div class="sidebar-user">
+                <div id="sidebarUserName">User</div>
+                <small id="sidebarUserRole">Employee</small>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="assets.html">Assets</a>
+                <a href="transfers.html">Transfers</a>
+                <a href="repairs.html">Repairs</a>
+                <a href="qr_scan.html">QR Scanner</a>
+                <a href="users.html" class="admin-only">Users</a>
+                <button type="button" class="logout" onclick="logout()">Logout</button>
+            </nav>
+        </aside>
+
+        <div class="main-area">
+
+            <header class="topbar">
+                <button
+                    type="button"
+                    class="menu-toggle"
+                    data-sidebar-toggle
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation menu"
+                    onclick="toggleSidebar()"
+                >☰</button>
+                <h2>QR Scanner</h2>
+            </header>
+
+            <main class="page-content" id="main-content">
+
+                <div class="qr-container">
+
+                    <h1>Scan an asset</h1>
+
+                    <!-- Proper tablist: keyboard reachable, arrow-key navigable -->
+                    <div class="tab-buttons" role="tablist" aria-label="Scan method">
+                        <button
+                            type="button"
+                            class="tab-btn"
+                            role="tab"
+                            id="tab-camera"
+                            aria-controls="camera"
+                            aria-selected="true"
+                        >Camera</button>
+
+                        <button
+                            type="button"
+                            class="tab-btn"
+                            role="tab"
+                            id="tab-upload"
+                            aria-controls="upload"
+                            aria-selected="false"
+                            tabindex="-1"
+                        >Upload image</button>
+
+                        <button
+                            type="button"
+                            class="tab-btn"
+                            role="tab"
+                            id="tab-manual"
+                            aria-controls="manual"
+                            aria-selected="false"
+                            tabindex="-1"
+                        >Enter ID</button>
+                    </div>
+
+                    <!-- Camera -->
+                    <section
+                        id="camera"
+                        class="tab-content"
+                        role="tabpanel"
+                        aria-labelledby="tab-camera"
+                        tabindex="0"
+                    >
+                        <div class="scanner-content">
+                            <label for="cameraSelect" class="visually-hidden">Choose camera</label>
+                            <select id="cameraSelect" class="camera-select" hidden></select>
+
+                            <video id="video" class="scanner-video" playsinline muted hidden></video>
+
+                            <button type="button" id="scanBtn" class="btn-block">Start Camera</button>
+
+                            <div id="cameraResult" class="result-box" role="status" aria-live="polite">
+                                <div class="result-content"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Upload -->
+                    <section
+                        id="upload"
+                        class="tab-content"
+                        role="tabpanel"
+                        aria-labelledby="tab-upload"
+                        tabindex="0"
+                        hidden
+                    >
+                        <div class="scanner-content">
+                            <div class="field">
+                                <label for="imageInput">Select an image containing a QR code</label>
+                                <input type="file" id="imageInput" accept="image/*">
+                            </div>
+
+                            <canvas id="canvas" hidden></canvas>
+
+                            <button type="button" id="uploadBtn" class="btn-block">Scan Image</button>
+
+                            <div id="uploadResult" class="result-box" role="status" aria-live="polite">
+                                <div class="result-content"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Manual entry: works without a camera, and is the accessible path. -->
+                    <section
+                        id="manual"
+                        class="tab-content"
+                        role="tabpanel"
+                        aria-labelledby="tab-manual"
+                        tabindex="0"
+                        hidden
+                    >
+                        <div class="scanner-content">
+                            <form id="manualForm" novalidate>
+                                <div class="field">
+                                    <label for="manualAssetId">Asset ID</label>
+                                    <input
+                                        type="text"
+                                        id="manualAssetId"
+                                        placeholder="AST-0001"
+                                        autocomplete="off"
+                                        required
+                                    >
+                                </div>
+
+                                <button type="submit" class="btn-block">Open asset</button>
+                            </form>
+
+                            <div id="manualResult" class="result-box" role="status" aria-live="polite">
+                                <div class="result-content"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Vendored locally so the scanner works on an isolated network. -->
+    <script src="vendor/jsQR.js"></script>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/qr_scanner.js"></script>
+
+</body>
+
 </html>

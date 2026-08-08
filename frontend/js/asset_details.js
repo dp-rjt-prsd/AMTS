@@ -1,250 +1,141 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+/* Asset details page */
+
 const params = new URLSearchParams(window.location.search);
 const assetId = params.get("asset_id");
 
-if (!assetId) {
-    window.location.href = "assets.html";
-}
+document.addEventListener("DOMContentLoaded", function () {
+    if (!requireAuth()) return;
 
-// ======================================
-// INIT
-// ======================================
-
-document.addEventListener("DOMContentLoaded", () => {
-    if (!requireAuth()) {
+    if (!assetId) {
+        window.location.href = "assets.html";
         return;
     }
 
-    applyRoleRules();
     loadCurrentUser();
+    applyRoleRules();
+
     loadAsset();
     loadTransferHistory();
     loadRepairHistory();
-});
 
-// ======================================
-// ASSET DETAILS
-// ======================================
+    const retireBtn = document.getElementById("retireBtn");
+    if (retireBtn) retireBtn.addEventListener("click", retireAsset);
+
+    const printBtn = document.getElementById("printQrBtn");
+    if (printBtn) printBtn.addEventListener("click", printQRForAsset);
+});
 
 async function loadAsset() {
     try {
-        const response = await fetch(`${API_BASE_URL}/assets/${assetId}`, {
-            headers: getAuthHeader()
-        });
+        const asset = await apiFetch("/assets/" + escUrl(assetId));
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                logout();
-                throw new Error("Session expired");
-            }
+        setText("assetId", asset.asset_id);
+        setText("assetName", asset.asset_name);
+        setText("currentHolder", asset.holder_name || "-");
+        setText("assetType", asset.asset_type_name || "-");
+        setText("serialNumber", asset.serial_number || "-");
+        setText("price", formatPrice(asset.price));
+        setText("remarks", asset.remarks || "-");
+        setText("procurementBy", asset.procurement_by || "-");
+        setText("purchaseOrderId", asset.purchase_order_id || "-");
 
-            if (response.status === 404) {
-                window.location.href = "assets.html";
-            }
+        const statusEl = document.getElementById("assetStatus");
+        if (statusEl) statusEl.innerHTML = getStatusBadge(asset.status_name);
 
-            throw new Error("Failed to load asset");
+        const qr = document.getElementById("assetQRCode");
+        if (qr) {
+            qr.src = safeQrSrc(asset.qr_code);
+            qr.alt = "QR code for asset " + asset.asset_id;
         }
-
-        const asset = await response.json();
-
-        document.getElementById("assetId").innerText = asset.asset_id;
-        document.getElementById("assetName").innerText = asset.asset_name;
-
-        if (asset.qr_code) {
-            document.getElementById("assetName").innerHTML += ' <span class="qr-badge">QR Enabled</span>';
-        }
-
-        document.getElementById("assetStatus").innerHTML = getStatusBadge(asset.status_name);
-        document.getElementById("currentHolder").innerText = asset.holder_name ?? "-";
-        document.getElementById("assetType").innerText = asset.asset_type_name ?? "-";
-        document.getElementById("serialNumber").innerText = asset.serial_number ?? "-";
-        document.getElementById("price").innerText = `₹${asset.price ?? 0}`;
-        document.getElementById("remarks").innerText = asset.remarks ?? "-";
-        document.getElementById("assetQRCode").src = asset.qr_code ?? 
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
     } catch (error) {
-        console.error(error);
-        showToast("Unable to load asset", "error");
+        showToast(error.message, "error");
+        if (String(error.message).toLowerCase().includes("not found")) {
+            setTimeout(function () {
+                window.location.href = "assets.html";
+            }, 1200);
+        }
     }
 }
-
-// ======================================
-// TRANSFER HISTORY
-// ======================================
 
 async function loadTransferHistory() {
     const table = document.getElementById("transferHistory");
     showTableLoader(table, 5);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/assets/${assetId}/transfers`, {
-            headers: getAuthHeader()
-        });
+        const transfers = await apiFetch("/assets/" + escUrl(assetId) + "/transfers");
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                logout();
-                throw new Error("Session expired");
-            }
-            throw new Error("Failed to load transfers");
+        if (!transfers || transfers.length === 0) {
+            table.innerHTML = emptyTableRow(5, "No transfer history");
+            return;
         }
 
-        const transfers = await response.json();
-        renderTransfers(transfers);
+        table.innerHTML = transfers
+            .map(function (t) {
+                return (
+                    "<tr>" +
+                    '<td data-label="ID">' + esc(t.transfer_id) + "</td>" +
+                    '<td data-label="From">' + esc(t.from_user_name) + "</td>" +
+                    '<td data-label="To">' + esc(t.to_user_name) + "</td>" +
+                    '<td data-label="Remarks">' + esc(t.remarks) + "</td>" +
+                    '<td data-label="Date">' + esc(formatDate(t.transferred_at)) + "</td>" +
+                    "</tr>"
+                );
+            })
+            .join("");
     } catch (error) {
-        console.error("Error loading transfers:", error);
         table.innerHTML = emptyTableRow(5, "Unable to load transfer history");
     }
 }
-
-function renderTransfers(transfers) {
-    const table = document.getElementById("transferHistory");
-
-    if (!transfers || transfers.length === 0) {
-        table.innerHTML = emptyTableRow(5, "No transfer history found");
-        return;
-    }
-
-    table.innerHTML = transfers.map(transfer => `
-        <tr>
-            <td>${transfer.transfer_id}</td>
-            <td>${transfer.from_user_name ?? "-"}</td>
-            <td>${transfer.to_user_name ?? "-"}</td>
-            <td>${transfer.remarks ?? "-"}</td>
-            <td>${formatDate(transfer.transferred_at)}</td>
-        </tr>
-    `).join("");
-}
-
-// ======================================
-// REPAIR HISTORY
-// ======================================
 
 async function loadRepairHistory() {
     const table = document.getElementById("repairHistory");
     showTableLoader(table, 4);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/assets/${assetId}/repairs`, {
-            headers: getAuthHeader()
-        });
+        const repairs = await apiFetch("/assets/" + escUrl(assetId) + "/repairs");
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                logout();
-                throw new Error("Session expired");
-            }
-            throw new Error("Failed to load repairs");
+        if (!repairs || repairs.length === 0) {
+            table.innerHTML = emptyTableRow(4, "No repair history");
+            return;
         }
 
-        const repairs = await response.json();
-        renderRepairs(repairs);
+        table.innerHTML = repairs
+            .map(function (r) {
+                return (
+                    "<tr>" +
+                    '<td data-label="ID">' + esc(r.repair_id) + "</td>" +
+                    '<td data-label="Issue">' + esc(r.issue_description) + "</td>" +
+                    '<td data-label="Sent">' + esc(formatDate(r.sent_at)) + "</td>" +
+                    '<td data-label="Returned">' +
+                    (r.returned_at ? esc(formatDate(r.returned_at)) : "-") +
+                    "</td>" +
+                    "</tr>"
+                );
+            })
+            .join("");
     } catch (error) {
-        console.error("Error loading repairs:", error);
         table.innerHTML = emptyTableRow(4, "Unable to load repair history");
     }
 }
 
-function renderRepairs(repairs) {
-    const table = document.getElementById("repairHistory");
+function printQRForAsset() {
+    printQrLabel(
+        document.getElementById("assetId").textContent,
+        document.getElementById("assetName").textContent,
+        document.getElementById("assetQRCode").src
+    );
+}
 
-    if (!repairs || repairs.length === 0) {
-        table.innerHTML = emptyTableRow(4, "No repair history found");
+async function retireAsset() {
+    if (!confirm("Retire this asset? It will be unassigned and marked as retired.")) {
         return;
     }
 
-    table.innerHTML = repairs.map(repair => `
-        <tr>
-            <td>${repair.repair_id}</td>
-            <td>${repair.issue_description}</td>
-            <td>${formatDate(repair.sent_at)}</td>
-            <td>${repair.returned_at ? formatDate(repair.returned_at) : "-"}</td>
-        </tr>
-    `).join("");
-}
-
-// PRINT QR CODE
-
-function printQRForAsset() {
-    const assetId = document.getElementById("assetId").innerText;
-    const assetName = document.getElementById("assetName").innerText;
-    const qrImage = document.getElementById("assetQRCode").src;
-
-    const printWindow = window.open("", "print_qr", "height=400,width=600");
-
-    printWindow.document.write(
-        `
-        <html>
-            <head>
-                <title>
-                    Print QR Code
-                </title>
-                <style>
-                    body {
-                        text-align: center;
-                        font-family: Arial;
-                        padding: 20px;
-                    }
-                    .qr-container {
-                        max-width: 400px;
-                        margin: 0 auto;
-                    }
-                    h2 {
-                        margin-top: 0;
-                    }
-                    img {
-                        max-width: 300px;
-                        margin: 20px 0;
-                        border: 1px solid #ddd;
-                        padding: 10px;
-                    }
-                    p {
-                        font-size: 14px;
-                        margin: 10px 0;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="qr-container">
-                    <h2>${assetName}</h2>
-                    <p>Asset ID: ${assetId}</p>
-                    <img
-                        src="${qrImage}"
-                        alt="QR Code"
-                    />
-                </div>
-            </body>
-        </html>
-        `
-    );
-
-    printWindow.document.close();
-    setTimeout(() => {
-        printWindow.print();
-    }, 250);
-}
-
-// ======================================
-// RETIRE ASSET
-// ======================================
-
-async function retireAsset() {
-    if (!confirm("Are you sure you want to retire this asset?")) return;
-    
     try {
-        const response = await fetch(`${API_BASE_URL}/assets/${assetId}/retire`, {
-            method: 'PUT',
-            headers: getAuthHeader()
-        });
-        
-        if (response.ok) {
-            showToast("Asset retired successfully", "success");
-            loadAsset(); // Refresh the details on the page
-        } else {
-            const data = await response.json();
-            showToast(data.detail || "Error retiring asset", "error");
-        }
+        await apiFetch("/assets/" + escUrl(assetId) + "/retire", { method: "PUT" });
+        showToast("Asset retired successfully");
+        loadAsset();
     } catch (error) {
-        showToast("Error retiring asset", "error");
+        showToast(error.message, "error");
     }
 }

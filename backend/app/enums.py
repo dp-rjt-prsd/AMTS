@@ -1,0 +1,32 @@
+"""Shared enumerations used by models, schemas and services."""
+
+from enum import Enum
+
+
+class Role(str, Enum):
+    ADMIN = "ADMIN"
+    DEPARTMENT_HEAD = "DEPARTMENT_HEAD"
+    EMPLOYEE = "EMPLOYEE"
+
+
+class AssetStatusName(str, Enum):
+    AVAILABLE = "Available"
+    ASSIGNED = "Assigned"
+    REPAIR = "Repair"
+    RETIRED = "Retired"
+
+
+class AuditAction(str, Enum):
+    ASSET_CREATED = "ASSET_CREATED"
+    ASSET_DELETED = "ASSET_DELETED"
+    ASSET_RETIRED = "ASSET_RETIRED"
+    ASSET_STATUS_CHANGED = "ASSET_STATUS_CHANGED"
+    ASSET_TRANSFERRED = "ASSET_TRANSFERRED"
+    ASSET_RETURNED = "ASSET_RETURNED"
+    ASSET_SCANNED_OUT = "ASSET_SCANNED_OUT"
+    REPAIR_OPENED = "REPAIR_OPENED"
+    REPAIR_CLOSED = "REPAIR_CLOSED"
+    USER_CREATED = "USER_CREATED"
+    USER_ROLE_CHANGED = "USER_ROLE_CHANGED"
+    LOGIN_SUCCEEDED = "LOGIN_SUCCEEDED"
+    LOGIN_FAILED = "LOGIN_FAILED"

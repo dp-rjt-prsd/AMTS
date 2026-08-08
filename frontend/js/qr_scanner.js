@@ -1,53 +1,85 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+/* QR scanner */
 
-let currentScannedAsset = null;
 let videoStream = null;
 let scanningActive = false;
 
-// ======================================
-// INIT
-// ======================================
+/* A QR code is untrusted input from a sticker anyone can print, so validate the
+   decoded content before putting it in a URL. Mirrors ASSET_ID_PATTERN in
+   backend/app/schemas/asset_schema.py. */
+const ASSET_ID_PATTERN = /^[A-Z0-9][A-Z0-9_-]{2,49}$/;
 
-document.addEventListener("DOMContentLoaded", () => {
-    if (!requireAuth()) {
-        return;
-    }
+document.addEventListener("DOMContentLoaded", function () {
+    if (!requireAuth()) return;
 
-    applyRoleRules();
     loadCurrentUser();
+    applyRoleRules();
+    initTabs();
+
+    const scanBtn = document.getElementById("scanBtn");
+    if (scanBtn) scanBtn.addEventListener("click", startCamera);
+
+    const uploadBtn = document.getElementById("uploadBtn");
+    if (uploadBtn) uploadBtn.addEventListener("click", uploadImage);
+
+    const manualForm = document.getElementById("manualForm");
+    if (manualForm) manualForm.addEventListener("submit", submitManual);
+
+    if (typeof jsQR === "undefined") {
+        showResult("cameraResult", "error",
+            "QR library failed to load. Check that vendor/jsQR.js is present.");
+    }
 });
 
-// ======================================
-// TAB SWITCHING
-// ======================================
+/* ---------- Tabs ---------- */
 
-function switchTab(tabName) {
-    // Hide all tabs
-    document.querySelectorAll(".tab-content").forEach((tab) => {
-        tab.classList.remove("active");
+function initTabs() {
+    const tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+    if (!tabs.length) return;
+
+    tabs.forEach(function (tab, index) {
+        tab.addEventListener("click", function () {
+            selectTab(tabs, index);
+        });
+
+        tab.addEventListener("keydown", function (event) {
+            let next = null;
+
+            if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+            else if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+            else if (event.key === "Home") next = 0;
+            else if (event.key === "End") next = tabs.length - 1;
+            else return;
+
+            event.preventDefault();
+            selectTab(tabs, next);
+            tabs[next].focus();
+        });
     });
 
-    // Remove active from all buttons
-    document.querySelectorAll(".tab-btn").forEach((btn) => {
-        btn.classList.remove("active");
+    selectTab(tabs, 0);
+}
+
+function selectTab(tabs, activeIndex) {
+    tabs.forEach(function (tab, i) {
+        const selected = i === activeIndex;
+        const panel = document.getElementById(tab.getAttribute("aria-controls"));
+
+        tab.setAttribute("aria-selected", selected ? "true" : "false");
+        tab.setAttribute("tabindex", selected ? "0" : "-1");
+        tab.classList.toggle("active", selected);
+
+        if (panel) {
+            panel.classList.toggle("active", selected);
+            panel.hidden = !selected;
+        }
     });
 
-    // Show selected tab
-    document.getElementById(tabName).classList.add("active");
-
-    // Add active to clicked button (using attribute selector to prevent global event errors)
-    const activeBtn = document.querySelector(`.tab-btn[onclick*='${tabName}']`);
-    if (activeBtn) activeBtn.classList.add("active");
-
-    // Stop scanning if switching away from camera
-    if (tabName !== "camera" && scanningActive) {
+    if (tabs[activeIndex].getAttribute("aria-controls") !== "camera" && scanningActive) {
         stopCamera();
     }
 }
 
-// ======================================
-// CAMERA SCANNING
-// ======================================
+/* ---------- Camera ---------- */
 
 async function startCamera() {
     const scanBtn = document.getElementById("scanBtn");
@@ -58,63 +90,72 @@ async function startCamera() {
         return;
     }
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showResult("cameraResult", "error",
+            "This browser does not support camera access. Use image upload or manual entry.");
+        return;
+    }
+
     try {
-        let constraints = { video: { facingMode: "user" } }; // Default to physical to prevent green virtual screen
         const cameraSelect = document.getElementById("cameraSelect");
 
-        // Use selected camera if available
-        if (cameraSelect && cameraSelect.value) {
-            constraints = { video: { deviceId: { exact: cameraSelect.value } } };
-        }
+        const constraints =
+            cameraSelect && cameraSelect.value
+                ? { video: { deviceId: { exact: cameraSelect.value } } }
+                : { video: { facingMode: "environment" } };
 
         videoStream = await navigator.mediaDevices.getUserMedia(constraints);
 
         video.setAttribute("playsinline", "true");
-        video.setAttribute("muted", "true");
+        video.muted = true;
         video.srcObject = videoStream;
-        video.style.display = "block";
+        video.hidden = false;
 
-        // Populate camera selector dropdown
-        if (cameraSelect && cameraSelect.options.length === 0) {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === "videoinput");
-            
-            if (videoDevices.length > 1) {
-                cameraSelect.style.display = "block";
-                cameraSelect.innerHTML = videoDevices.map((cam, i) => 
-                    `<option value="${cam.deviceId}">${cam.label || 'Camera ' + (i + 1)}</option>`
-                ).join('');
-                
-                // Set dropdown to currently active camera
-                const activeTrack = videoStream.getVideoTracks()[0];
-                if (activeTrack) {
-                    const activeId = activeTrack.getSettings().deviceId;
-                    if (activeId) cameraSelect.value = activeId;
-                }
-            }
-        }
+        await populateCameraList(cameraSelect);
 
-        // Wait for the video feed metadata to load before playing
-        video.onloadedmetadata = async () => {
+        video.onloadedmetadata = async function () {
             try {
                 await video.play();
-                scanBtn.innerText = "Stop Scanning";
+                scanBtn.textContent = "Stop Scanning";
                 scanningActive = true;
                 scanQRFromVideo();
             } catch (e) {
-                console.error("Video play error:", e);
+                showResult("cameraResult", "error", "Unable to start the video preview.");
             }
         };
     } catch (error) {
-        console.error("Error accessing camera:", error);
+        const message =
+            error && error.name === "NotAllowedError"
+                ? "Camera permission was denied. Allow access, or use image upload."
+                : "Unable to access the camera. Use image upload or manual entry.";
 
-        showResult(
-            "cameraResult",
-            "error",
-            "Unable to access camera. Please check permissions."
-        );
+        showResult("cameraResult", "error", message);
+        scanBtn.textContent = "Start Camera";
+    }
+}
 
-        scanBtn.innerText = "Start Camera";
+async function populateCameraList(cameraSelect) {
+    if (!cameraSelect || cameraSelect.options.length > 0) return;
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter(function (d) {
+        return d.kind === "videoinput";
+    });
+
+    if (cameras.length <= 1) return;
+
+    cameraSelect.hidden = false;
+
+    cameras.forEach(function (cam, i) {
+        const option = document.createElement("option");
+        option.value = cam.deviceId;
+        option.textContent = cam.label || "Camera " + (i + 1);
+        cameraSelect.appendChild(option);
+    });
+
+    const track = videoStream.getVideoTracks()[0];
+    if (track && track.getSettings().deviceId) {
+        cameraSelect.value = track.getSettings().deviceId;
     }
 }
 
@@ -123,21 +164,19 @@ function stopCamera() {
     const scanBtn = document.getElementById("scanBtn");
 
     if (videoStream) {
-        videoStream.getTracks().forEach((track) => track.stop());
+        videoStream.getTracks().forEach(function (t) {
+            t.stop();
+        });
         videoStream = null;
     }
 
-    video.style.display = "none";
-    video.srcObject = null;
-    scanBtn.innerText = "Start Camera";
-    scanningActive = false;
-}
-
-async function switchCamera() {
-    if (scanningActive) {
-        stopCamera();
-        await startCamera();
+    if (video) {
+        video.hidden = true;
+        video.srcObject = null;
     }
+    if (scanBtn) scanBtn.textContent = "Start Camera";
+
+    scanningActive = false;
 }
 
 function scanQRFromVideo() {
@@ -151,28 +190,20 @@ function scanQRFromVideo() {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             try {
-                const imageData = context.getImageData(
-                    0,
-                    0,
-                    canvas.width,
-                    canvas.height
-                );
-    
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
+                const image = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(image.data, image.width, image.height, {
+                    inversionAttempts: "dontInvert"
                 });
-    
+
                 if (code && code.data) {
                     handleScannedQR(code.data);
-                    stopCamera();
                     return;
                 }
             } catch (e) {
-                console.error("QR Scan Error:", e);
+                // A single unreadable frame is normal; keep scanning.
             }
         }
 
@@ -182,92 +213,88 @@ function scanQRFromVideo() {
     scan();
 }
 
-// ======================================
-// FILE UPLOAD SCANNING
-// ======================================
+/* ---------- Image upload ---------- */
 
-async function uploadImage() {
+function uploadImage() {
     const fileInput = document.getElementById("imageInput");
 
     if (!fileInput.files.length) {
-        showResult("uploadResult", "error", "Please select an image");
+        showResult("uploadResult", "error", "Please choose an image first.");
         return;
     }
 
     const file = fileInput.files[0];
 
-    try {
-        const image = new Image();
-        image.onload = () => {
-            const canvas = document.getElementById("canvas");
-            const context = canvas.getContext("2d");
-
-            canvas.width = image.width;
-            canvas.height = image.height;
-
-            context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-            const code = jsQR(
-                imageData.data,
-                imageData.width,
-                imageData.height
-            );
-
-            if (code) {
-                handleScannedQR(code.data);
-            } else {
-                showResult(
-                    "uploadResult",
-                    "error",
-                    "No QR code found in image"
-                );
-            }
-        };
-
-        image.onerror = () => {
-            showResult("uploadResult", "error", "Failed to load image");
-        };
-
-        image.src = URL.createObjectURL(file);
-    } catch (error) {
-        console.error("Error processing image:", error);
-        showResult("uploadResult", "error", "Error processing image");
+    if (!file.type.startsWith("image/")) {
+        showResult("uploadResult", "error", "That file is not an image.");
+        return;
     }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = function () {
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+
+        canvas.width = image.width;
+        canvas.height = image.height;
+        context.drawImage(image, 0, 0);
+
+        URL.revokeObjectURL(objectUrl);
+
+        const data = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(data.data, data.width, data.height);
+
+        if (code && code.data) {
+            handleScannedQR(code.data, "uploadResult");
+        } else {
+            showResult("uploadResult", "error", "No QR code found in that image.");
+        }
+    };
+
+    image.onerror = function () {
+        URL.revokeObjectURL(objectUrl);
+        showResult("uploadResult", "error", "That image could not be read.");
+    };
+
+    image.src = objectUrl;
 }
 
-// ======================================
-// HANDLE SCANNED QR
-// ======================================
+/* ---------- Manual entry ---------- */
 
-async function handleScannedQR(qrData) {
-    try {
-        // QR data should be the asset ID
-        const assetId = qrData.trim().toUpperCase();
+function submitManual(event) {
+    event.preventDefault();
+    handleScannedQR(document.getElementById("manualAssetId").value, "manualResult");
+}
 
-        // Redirect immediately to full asset details
-        window.location.href = `asset_details.html?asset_id=${assetId}`;
-        
-    } catch (error) {
-        console.error("Error handling QR:", error);
+/* ---------- Handling a scan ---------- */
 
+function handleScannedQR(rawValue, resultBoxId) {
+    resultBoxId = resultBoxId || "cameraResult";
+
+    const assetId = String(rawValue || "").trim().toUpperCase();
+
+    if (!ASSET_ID_PATTERN.test(assetId)) {
         showResult(
-            "cameraResult",
+            resultBoxId,
             "error",
-            "Error processing QR code"
+            "That code is not a valid asset ID. Expected 3-50 characters: " +
+                "letters, digits, dashes or underscores."
         );
+        return;
     }
-}
 
-// ======================================
-// HELPERS
-// ======================================
+    stopCamera();
+    window.location.href = "asset_details.html?asset_id=" + encodeURIComponent(assetId);
+}
 
 function showResult(elementId, type, message) {
-    const resultBox = document.getElementById(elementId);
+    const box = document.getElementById(elementId);
+    if (!box) return;
 
-    resultBox.className = `result-box ${type} show`;
+    box.className = "result-box " + type + " show";
 
-    resultBox.querySelector(".result-content").innerHTML = message;
+    const content = box.querySelector(".result-content");
+    if (content) content.textContent = message;
 }

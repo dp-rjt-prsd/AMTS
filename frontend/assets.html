@@ -2,311 +2,191 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        Asset Management
-    </title>
-
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assets - AMTS</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-<div class="app-layout">
-
-    <!-- SIDEBAR -->
-
-    <aside
-        class="sidebar"
-        id="sidebar"
-    >
-
-        <div class="sidebar-header">
-            AMTS
+    <noscript>
+        <div class="noscript-banner">
+            This application requires JavaScript. Please enable it in your browser settings,
+            then reload this page.
         </div>
+    </noscript>
 
-        <div class="sidebar-user">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-            <div id="sidebarUserName">
-                User
+    <div class="app-layout">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">AMTS</div>
+
+            <div class="sidebar-user">
+                <div id="sidebarUserName">User</div>
+                <small id="sidebarUserRole">Employee</small>
             </div>
 
-            <small id="sidebarUserRole">
-                Employee
-            </small>
-
-        </div>
-
-        <nav class="sidebar-nav">
-
-            <a href="dashboard.html">
-                Dashboard
-            </a>
-
-            <a
-                href="assets.html"
-                class="active"
-            >
-                Assets
-            </a>
-
-            <a href="transfers.html">
-                Transfers
-            </a>
-
-            <a href="repairs.html">
-                Repairs
-            </a>
-
-            <a href="qr_scan.html">
-                QR Scanner
-            </a>
-
-            <a
-                href="users.html"
-                class="admin-only"
-            >
-                Users
-            </a>
-
-            <a
-                href="#"
-                class="logout"
-                onclick="logout()"
-            >
-                Logout
-            </a>
-
-        </nav>
-
-    </aside>
-
-    <!-- MAIN -->
-
-    <div class="main-area">
-
-        <header class="topbar">
-
-            <div
-                class="menu-toggle"
-                onclick="toggleSidebar()"
-            >
-                ☰
-            </div>
-
-            <h2>
-                Asset Management
-            </h2>
-
-            <button
-                onclick="loadAssets()"
-            >
-                Refresh
-            </button>
-
-        </header>
-
-        <main class="page-content">
-
-            <h1 class="page-title">
-                Assets
-            </h1>
-
-            <!-- CREATE ASSET -->
-
-            <section class="asset-form">
-
-                <h2>
-                    Create Asset
-                </h2>
-
-                <form id="assetForm">
-
-                    <input
-                        type="text"
-                        id="asset_id"
-                        placeholder="Asset ID"
-                        required
-                    >
-
-                    <input
-                        type="text"
-                        id="asset_name"
-                        placeholder="Asset Name"
-                        required
-                    >
-
-                    <input
-                        type="text"
-                        id="serial_number"
-                        placeholder="Serial Number"
-                    >
-
-                    <input
-                        type="number"
-                        id="price"
-                        placeholder="Price"
-                    >
-
-                    <input
-                        type="text"
-                        id="procurement_by"
-                        placeholder="Procured By"
-                    >
-
-                    <input
-                        type="text"
-                        id="purchase_order_id"
-                        placeholder="Purchase Order ID"
-                    >
-
-                    <select
-                        id="asset_type_id"
-                        required
-                    >
-
-                        <option value="">
-                            Select Asset Type
-                        </option>
-
-                    </select>
-
-                    <select
-                        id="status_id"
-                        required
-                    >
-
-                        <option value="">
-                            Select Status
-                        </option>
-
-                    </select>
-
-                    <select
-                        id="current_holder_id"
-                    >
-
-                        <option value="">
-                            No Holder
-                        </option>
-
-                    </select>
-
-                    <textarea
-                        id="remarks"
-                        placeholder="Remarks"
-                    ></textarea>
-
-                    <button
-                        type="submit"
-                    >
-                        Create Asset
-                    </button>
-
-                </form>
-
-            </section>
-
-            <!-- SEARCH -->
-
-            <div class="toolbar">
-
-                <input
-                    type="text"
-                    id="searchBox"
-                    placeholder="Search Asset ID or Name..."
-                >
-
-            </div>
-
-            <!-- ASSETS TABLE -->
-
-            <section>
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                        <tr>
-
-                            <th>
-                                Asset ID
-                            </th>
-
-                            <th>
-                                Asset Name
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                            <th>
-                                Holder
-                            </th>
-
-                            <th>
-                                Serial Number
-                            </th>
-
-                            <th>
-                                Price
-                            </th>
-
-                        </tr>
-
-                        </thead>
-
-                        <tbody
-                            id="assetTable"
-                        >
-
-                        </tbody>
-
-                    </table>
-
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="assets.html">Assets</a>
+                <a href="transfers.html">Transfers</a>
+                <a href="repairs.html">Repairs</a>
+                <a href="qr_scan.html">QR Scanner</a>
+                <a href="users.html" class="admin-only">Users</a>
+                <button type="button" class="logout" onclick="logout()">Logout</button>
+            </nav>
+        </aside>
+
+        <div class="main-area">
+
+            <header class="topbar">
+                <button
+                    type="button"
+                    class="menu-toggle"
+                    data-sidebar-toggle
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation menu"
+                    onclick="toggleSidebar()"
+                >☰</button>
+
+                <h2>Assets</h2>
+
+                <button type="button" onclick="loadAssets()">Refresh</button>
+            </header>
+
+            <main class="page-content" id="main-content">
+
+                <h1 class="page-title">Assets</h1>
+
+                <!-- Admin-only in the DOM, and enforced by the API. -->
+                <section class="asset-form admin-only">
+
+                    <h2>Create Asset</h2>
+
+                    <form id="assetForm" novalidate>
+
+                        <div class="field">
+                            <label for="asset_id">Asset ID <span aria-hidden="true">*</span></label>
+                            <input type="text" id="asset_id" placeholder="AST-0001" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="asset_name">Asset Name <span aria-hidden="true">*</span></label>
+                            <input type="text" id="asset_name" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="serial_number">Serial Number</label>
+                            <input type="text" id="serial_number">
+                        </div>
+
+                        <div class="field">
+                            <label for="price">Price</label>
+                            <input type="number" id="price" step="0.01" min="0" inputmode="decimal">
+                        </div>
+
+                        <div class="field">
+                            <label for="procurement_by">Procured By</label>
+                            <input type="text" id="procurement_by">
+                        </div>
+
+                        <div class="field">
+                            <label for="purchase_order_id">Purchase Order ID</label>
+                            <input type="text" id="purchase_order_id">
+                        </div>
+
+                        <div class="field">
+                            <label for="asset_type_id">Asset Type <span aria-hidden="true">*</span></label>
+                            <select id="asset_type_id" required>
+                                <option value="">Select asset type</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="status_id">Status <span aria-hidden="true">*</span></label>
+                            <select id="status_id" required>
+                                <option value="">Select status</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="current_holder_id">Current Holder</label>
+                            <select id="current_holder_id">
+                                <option value="">No holder</option>
+                            </select>
+                        </div>
+
+                        <div class="field field-wide">
+                            <label for="remarks">Remarks</label>
+                            <textarea id="remarks" rows="2"></textarea>
+                        </div>
+
+                        <button type="submit">Create Asset</button>
+
+                    </form>
+
+                </section>
+
+                <div class="toolbar">
+                    <label for="searchBox" class="visually-hidden">Search assets</label>
+                    <input type="search" id="searchBox" placeholder="Search by ID, name or serial...">
                 </div>
 
-            </section>
+                <section>
+                    <div class="table-wrapper">
+                        <table class="responsive-table">
+                            <caption class="visually-hidden">Assets visible to you</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Asset ID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Holder</th>
+                                    <th scope="col">Serial Number</th>
+                                    <th scope="col">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assetTable"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-        </main>
-
+            </main>
+        </div>
     </div>
 
-</div>
+    <!-- QR modal -->
+    <div
+        id="qrModal"
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="qrModalTitle"
+        aria-hidden="true"
+    >
+        <div class="modal-content">
+            <h2 id="qrModalTitle">Asset created</h2>
 
-<!-- QR MODAL -->
-<div id="qrModal" class="modal">
-    <div class="modal-content">
-        <h2>Asset Created!</h2>
-        <div class="qr-display" style="margin-top: 20px; text-align: center;">
-            <img id="qrModalImage" class="qr-image" src="" alt="QR Code" style="max-width: 200px; margin: 0 auto; display: block;">
-            <div style="margin-top: 10px; font-weight: bold; font-size: 18px;" id="qrModalAssetId"></div>
-            <div style="color: var(--muted); margin-bottom: 20px;" id="qrModalAssetName"></div>
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-print" onclick="printCreatedQR()">🖨️ Print QR</button>
-            <button class="btn btn-cancel" onclick="document.getElementById('qrModal').classList.remove('show')">Close</button>
+            <div class="qr-display">
+                <img id="qrModalImage" class="qr-image" src="" alt="">
+                <p class="qr-asset-id" id="qrModalAssetId"></p>
+                <p class="qr-asset-name" id="qrModalAssetName"></p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-print" onclick="printCreatedQR()">Print QR</button>
+                <button type="button" class="btn btn-cancel" onclick="closeQRModal()">Close</button>
+            </div>
         </div>
     </div>
-</div>
 
-<script src="js/utils.js"></script>
-<script>requireAuth();</script>
-<script src="js/assets.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/assets.js"></script>
 
 </body>
 

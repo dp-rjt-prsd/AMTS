@@ -1,61 +1,56 @@
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+"""Authentication and role-based authorisation dependencies."""
 
-from app.auth.auth_handler import verify_token
+from typing import Annotated, Callable
 
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-security = HTTPBearer()
+from app.auth.auth_handler import TokenExpired, TokenInvalid, verify_token
+from app.enums import Role
+
+security = HTTPBearer(auto_error=True)
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    """Extract and verify current user from token"""
-    token = credentials.credentials
-
-    payload = verify_token(token)
-
-    if payload is None:
-
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> dict:
+    """Resolve the caller from their bearer token."""
+    try:
+        return verify_token(credentials.credentials)
+    except TokenExpired:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except TokenInvalid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return payload
+
+CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 
-def require_admin(
-    current_user: dict = Depends(get_current_user)
-):
-    """Dependency to require ADMIN role"""
-    if current_user.get("role") != "ADMIN":
-        raise HTTPException(
-            status_code=403,
-            detail="Admin access required"
-        )
-    return current_user
+def require_roles(*allowed: Role) -> Callable[[dict], dict]:
+    """Build a dependency that admits only the given roles."""
+    allowed_values = {r.value for r in allowed}
+
+    def dependency(current_user: CurrentUser) -> dict:
+        if current_user.get("role") not in allowed_values:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to perform this action",
+            )
+        return current_user
+
+    return dependency
 
 
-def require_department_head(
-    current_user: dict = Depends(get_current_user)
-):
-    """Dependency to require DEPARTMENT_HEAD role"""
-    if current_user.get("role") not in ["ADMIN", "DEPARTMENT_HEAD"]:
-        raise HTTPException(
-            status_code=403,
-            detail="Department Head or Admin access required"
-        )
-    return current_user
+require_admin = require_roles(Role.ADMIN)
+require_department_head = require_roles(Role.ADMIN, Role.DEPARTMENT_HEAD)
 
-
-def require_authenticated(
-    current_user: dict = Depends(get_current_user)
-):
-    """Dependency to require any authenticated user"""
-    if not current_user:
-        raise HTTPException(
-            status_code=401,
-            detail="Authentication required"
-        )
-    return current_user
+AdminUser = Annotated[dict, Depends(require_admin)]
+DepartmentHeadUser = Annotated[dict, Depends(require_department_head)]

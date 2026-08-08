@@ -1,46 +1,61 @@
-from datetime import datetime, timedelta
-from jose import JWTError
-from jose import jwt
-import os
-from dotenv import load_dotenv
+"""JWT creation and verification."""
 
-load_dotenv()
+import uuid
+from datetime import datetime, timedelta, timezone
 
-SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key_here")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
+from jose import ExpiredSignatureError, JWTError, jwt
+
+from app.config import settings
 
 
-def create_access_token(data: dict):
+class TokenExpired(Exception):
+    """Token is well-formed but past its expiry."""
 
-    to_encode = data.copy()
 
-    expire = datetime.utcnow() + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+class TokenInvalid(Exception):
+    """Token is malformed, mis-signed, or missing claims."""
 
-    to_encode.update({"exp": expire})
 
-    encoded_jwt = jwt.encode(
-        to_encode,
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
+def create_access_token(
+    *,
+    user_id: int,
+    email: str,
+    role: str,
+    name: str,
+) -> str:
+    now = datetime.now(timezone.utc)
 
-    return encoded_jwt
+    payload = {
+        "sub": str(user_id),
+        "user_id": user_id,
+        "email": email,
+        "role": role,
+        # Needed by the scan endpoint to build its confirmation message.
+        "name": name,
+        "iat": now,
+        "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        # Unique token id; the hook a future revocation list would use.
+        "jti": uuid.uuid4().hex,
+    }
 
-def verify_token(token: str):
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
+
+def verify_token(token: str) -> dict:
+    """Decode a token, raising TokenExpired or TokenInvalid so callers can tell them apart."""
     try:
-
         payload = jwt.decode(
             token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
         )
+    except ExpiredSignatureError as exc:
+        raise TokenExpired("Token has expired") from exc
+    except JWTError as exc:
+        raise TokenInvalid("Token is invalid") from exc
 
-        return payload
+    for claim in ("user_id", "role", "name"):
+        if claim not in payload:
+            raise TokenInvalid(f"Token is missing the '{claim}' claim")
 
-    except JWTError:
-
-        return None
+    return payload

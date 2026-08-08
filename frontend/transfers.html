@@ -2,243 +2,126 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        Asset Transfers
-    </title>
-
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfers - AMTS</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-<div class="app-layout">
-
-    <!-- SIDEBAR -->
-
-    <aside
-        class="sidebar"
-        id="sidebar"
-    >
-
-        <div class="sidebar-header">
-            AMTS
+    <noscript>
+        <div class="noscript-banner">
+            This application requires JavaScript. Please enable it in your browser settings,
+            then reload this page.
         </div>
+    </noscript>
 
-        <div class="sidebar-user">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-            <div id="sidebarUserName">
-                User
+    <div class="app-layout">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">AMTS</div>
+
+            <div class="sidebar-user">
+                <div id="sidebarUserName">User</div>
+                <small id="sidebarUserRole">Employee</small>
             </div>
 
-            <small id="sidebarUserRole">
-                Employee
-            </small>
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="assets.html">Assets</a>
+                <a href="transfers.html">Transfers</a>
+                <a href="repairs.html">Repairs</a>
+                <a href="qr_scan.html">QR Scanner</a>
+                <a href="users.html" class="admin-only">Users</a>
+                <button type="button" class="logout" onclick="logout()">Logout</button>
+            </nav>
+        </aside>
 
-        </div>
+        <div class="main-area">
 
-        <nav class="sidebar-nav">
+            <header class="topbar">
+                <button
+                    type="button"
+                    class="menu-toggle"
+                    data-sidebar-toggle
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation menu"
+                    onclick="toggleSidebar()"
+                >☰</button>
 
-            <a href="dashboard.html">
-                Dashboard
-            </a>
+                <h2>Transfers</h2>
 
-            <a href="assets.html">
-                Assets
-            </a>
+                <button type="button" onclick="loadTransfers()">Refresh</button>
+            </header>
 
-            <a
-                href="transfers.html"
-                class="active"
-            >
-                Transfers
-            </a>
+            <main class="page-content" id="main-content">
 
-            <a href="repairs.html">
-                Repairs
-            </a>
+                <h1 class="page-title">Asset Transfers</h1>
 
-            <a href="qr_scan.html">
-                QR Scanner
-            </a>
+                <section class="asset-form admin-only">
 
-            <a
-                href="users.html"
-                class="admin-only"
-            >
-                Users
-            </a>
+                    <h2>Transfer an Asset</h2>
 
-            <a
-                href="#"
-                class="logout"
-                onclick="logout()"
-            >
-                Logout
-            </a>
+                    <form id="transferForm" novalidate>
 
-        </nav>
+                        <div class="field">
+                            <label for="asset_id">Asset ID <span aria-hidden="true">*</span></label>
+                            <input type="text" id="asset_id" placeholder="AST-0001" required>
+                        </div>
 
-    </aside>
+                        <div class="field">
+                            <label for="to_user_id">Transfer To <span aria-hidden="true">*</span></label>
+                            <select id="to_user_id" required>
+                                <option value="">Select a recipient</option>
+                            </select>
+                        </div>
 
-    <!-- MAIN -->
+                        <div class="field field-wide">
+                            <label for="remarks">Remarks</label>
+                            <textarea id="remarks" rows="2" maxlength="500"></textarea>
+                        </div>
 
-    <div class="main-area">
+                        <button type="submit">Transfer Asset</button>
 
-        <header class="topbar">
+                    </form>
 
-            <div
-                class="menu-toggle"
-                onclick="toggleSidebar()"
-            >
-                ☰
-            </div>
+                </section>
 
-            <h2>
-                Asset Transfers
-            </h2>
-
-            <button
-                onclick="loadTransfers()"
-            >
-                Refresh
-            </button>
-
-        </header>
-
-        <main class="page-content">
-
-            <h1 class="page-title">
-                Transfer Management
-            </h1>
-
-            <!-- TRANSFER FORM -->
-
-            <section class="asset-form">
-
-                <h2>
-                    Transfer Asset
-                </h2>
-
-                <form id="transferForm">
-
-                    <input
-                        type="text"
-                        id="asset_id"
-                        placeholder="Asset ID"
-                        required
-                    >
-
-                    <select
-                        id="to_user_id"
-                        required
-                    >
-
-                        <option value="">
-                            Select User
-                        </option>
-
-                    </select>
-
-                    <textarea
-                        id="remarks"
-                        placeholder="Transfer Remarks"
-                    ></textarea>
-
-                    <button
-                        type="submit"
-                    >
-                        Transfer Asset
-                    </button>
-
-                </form>
-
-            </section>
-
-            <!-- SEARCH -->
-
-            <div class="toolbar">
-
-                <input
-                    type="text"
-                    id="searchBox"
-                    placeholder="Search Asset ID..."
-                >
-
-            </div>
-
-            <!-- TABLE -->
-
-            <section>
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                        <tr>
-
-                            <th>
-                                Transfer ID
-                            </th>
-
-                            <th>
-                                Asset ID
-                            </th>
-
-                            <th>
-                                From User
-                            </th>
-
-                            <th>
-                                To User
-                            </th>
-
-                            <th>
-                                Remarks
-                            </th>
-
-                            <th>
-                                Date
-                            </th>
-
-                        </tr>
-
-                        </thead>
-
-                        <tbody
-                            id="transferTable"
-                        >
-
-                        </tbody>
-
-                    </table>
-
+                <div class="toolbar">
+                    <label for="searchBox" class="visually-hidden">Search transfers</label>
+                    <input type="search" id="searchBox" placeholder="Search by asset or user...">
                 </div>
 
-            </section>
+                <section>
+                    <div class="table-wrapper">
+                        <table class="responsive-table">
+                            <caption class="visually-hidden">Transfer history</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Asset</th>
+                                    <th scope="col">From</th>
+                                    <th scope="col">To</th>
+                                    <th scope="col">Remarks</th>
+                                    <th scope="col">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transferTable"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-        </main>
-
+            </main>
+        </div>
     </div>
 
-</div>
-
-<script src="js/utils.js"></script>
-<script>requireAuth();</script>
-<script src="js/transfers.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/transfers.js"></script>
 
 </body>
 

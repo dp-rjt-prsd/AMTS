@@ -2,287 +2,160 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>User Management</title>
-
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - AMTS</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-<div class="app-layout">
-
-    <!-- SIDEBAR -->
-
-    <aside
-        class="sidebar"
-        id="sidebar"
-    >
-
-        <div class="sidebar-header">
-            AMTS
+    <noscript>
+        <div class="noscript-banner">
+            This application requires JavaScript. Please enable it in your browser settings,
+            then reload this page.
         </div>
+    </noscript>
 
-        <div class="sidebar-user">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-            <div id="sidebarUserName">
-                User
+    <div class="app-layout">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">AMTS</div>
+
+            <div class="sidebar-user">
+                <div id="sidebarUserName">User</div>
+                <small id="sidebarUserRole">Employee</small>
             </div>
 
-            <small id="sidebarUserRole">
-                Employee
-            </small>
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="assets.html">Assets</a>
+                <a href="transfers.html">Transfers</a>
+                <a href="repairs.html">Repairs</a>
+                <a href="qr_scan.html">QR Scanner</a>
+                <a href="users.html" class="admin-only">Users</a>
+                <button type="button" class="logout" onclick="logout()">Logout</button>
+            </nav>
+        </aside>
 
-        </div>
+        <div class="main-area">
 
-        <nav class="sidebar-nav">
+            <header class="topbar">
+                <button
+                    type="button"
+                    class="menu-toggle"
+                    data-sidebar-toggle
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation menu"
+                    onclick="toggleSidebar()"
+                >☰</button>
 
-            <a href="dashboard.html">
-                Dashboard
-            </a>
+                <h2>User Management</h2>
 
-            <a href="assets.html">
-                Assets
-            </a>
+                <button type="button" onclick="loadUsers()">Refresh</button>
+            </header>
 
-            <a href="transfers.html">
-                Transfers
-            </a>
+            <main class="page-content" id="main-content">
 
-            <a href="repairs.html">
-                Repairs
-            </a>
+                <h1 class="page-title">Users</h1>
 
-            <a href="qr_scan.html">
-                QR Scanner
-            </a>
+                <section class="asset-form">
 
-            <a
-                href="users.html"
-                class="active"
-            >
-                Users
-            </a>
+                    <h2>Create User</h2>
 
-            <a
-                href="#"
-                class="logout"
-                onclick="logout()"
-            >
-                Logout
-            </a>
+                    <!-- The only place accounts are created; the endpoint requires an admin. -->
+                    <form id="userForm" novalidate>
 
-        </nav>
+                        <div class="field">
+                            <label for="emp_id">Employee ID <span aria-hidden="true">*</span></label>
+                            <input type="text" id="emp_id" required>
+                        </div>
 
-    </aside>
+                        <div class="field">
+                            <label for="name">Full Name <span aria-hidden="true">*</span></label>
+                            <input type="text" id="name" required>
+                        </div>
 
-    <!-- MAIN -->
+                        <div class="field">
+                            <label for="email">Email <span aria-hidden="true">*</span></label>
+                            <input type="email" id="email" autocomplete="off" required>
+                        </div>
 
-    <div class="main-area">
+                        <div class="field">
+                            <label for="password">
+                                Password <span aria-hidden="true">*</span>
+                            </label>
+                            <input
+                                type="password"
+                                id="password"
+                                minlength="8"
+                                autocomplete="new-password"
+                                aria-describedby="passwordHelp"
+                                required
+                            >
+                            <small id="passwordHelp" class="field-help">At least 8 characters.</small>
+                        </div>
 
-        <header class="topbar">
+                        <div class="field">
+                            <label for="role">Role <span aria-hidden="true">*</span></label>
+                            <select id="role" required>
+                                <option value="EMPLOYEE">Employee</option>
+                                <option value="DEPARTMENT_HEAD">Department Head</option>
+                                <option value="ADMIN">Administrator</option>
+                            </select>
+                        </div>
 
-            <div
-                class="menu-toggle"
-                onclick="toggleSidebar()"
-            >
-                ☰
-            </div>
+                        <div class="field">
+                            <label for="dept_id">Department</label>
+                            <!-- Populated from GET /departments. -->
+                            <select id="dept_id">
+                                <option value="">No department</option>
+                            </select>
+                        </div>
 
-            <h2>
-                User Management
-            </h2>
+                        <button type="submit">Create User</button>
 
-            <button
-                onclick="loadUsers()"
-            >
-                Refresh
-            </button>
+                    </form>
 
-        </header>
+                </section>
 
-        <main class="page-content">
-
-            <h1 class="page-title">
-                Users
-            </h1>
-
-            <!-- CREATE USER -->
-
-            <section class="asset-form">
-
-                <h2>
-                    Create User
-                </h2>
-
-                <form id="userForm">
-
-                    <input
-                        type="text"
-                        id="emp_id"
-                        placeholder="Employee ID"
-                        required
-                    >
-
-                    <input
-                        type="text"
-                        id="name"
-                        placeholder="Full Name"
-                        required
-                    >
-
-                    <input
-                        type="email"
-                        id="email"
-                        placeholder="Email Address"
-                        required
-                    >
-
-                    <input
-                        type="password"
-                        id="password"
-                        placeholder="Password"
-                        required
-                    >
-
-                    <select
-                        id="role"
-                        required
-                    >
-
-                        <option value="EMPLOYEE">
-                            Employee
-                        </option>
-
-                        <option value="DEPARTMENT_HEAD">
-                            Department Head
-                        </option>
-
-                        <option value="ADMIN">
-                            Admin
-                        </option>
-
-                    </select>
-
-                    <select
-                        id="dept_id"
-                        required
-                    >
-                        <option value="" disabled selected>Select Department</option>
-                        <option value="1">Department 1</option>
-                        <option value="2">Department 2</option>
-                        <option value="3">Department 3</option>
-                        <option value="4">Department 4</option>
-                        <option value="5">Department 5</option>
-                        <option value="6">Department 6</option>
-                        <option value="7">Department 7</option>
-                        <option value="8">Department 8</option>
-                    </select>
-
-                    <button
-                        type="submit"
-                    >
-                        Create User
-                    </button>
-
-                </form>
-
-            </section>
-
-            <!-- SEARCH -->
-
-            <div class="toolbar">
-
-                <input
-                    type="text"
-                    id="searchBox"
-                    placeholder="Search User..."
-                >
-
-            </div>
-
-            <!-- USER TABLE -->
-
-            <section>
-
-                <h2
-                    style="margin-bottom:16px;"
-                >
-                    User Directory
-                </h2>
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                        <tr>
-
-                            <th>
-                                User ID
-                            </th>
-
-                            <th>
-                                Employee ID
-                            </th>
-
-                            <th>
-                                Name
-                            </th>
-
-                            <th>
-                                Email
-                            </th>
-
-                            <th>
-                                Role
-                            </th>
-
-                            <th>
-                                Department
-                            </th>
-
-                            <th>
-                                Created
-                            </th>
-
-                        </tr>
-
-                        </thead>
-
-                        <tbody
-                            id="userTable"
-                        >
-
-                        </tbody>
-
-                    </table>
-
+                <div class="toolbar">
+                    <label for="searchBox" class="visually-hidden">Search users</label>
+                    <input type="search" id="searchBox" placeholder="Search by name, employee ID or email...">
                 </div>
 
-            </section>
+                <section>
+                    <h2>User Directory</h2>
 
-        </main>
+                    <div class="table-wrapper">
+                        <table class="responsive-table">
+                            <caption class="visually-hidden">All user accounts</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">User ID</th>
+                                    <th scope="col">Employee ID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col">Role</th>
+                                    <th scope="col">Department</th>
+                                    <th scope="col">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTable"></tbody>
+                        </table>
+                    </div>
+                </section>
 
+            </main>
+        </div>
     </div>
 
-</div>
-
-<script src="js/utils.js"></script>
-<script>requireAdmin();</script>
-<script src="js/users.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/users.js"></script>
 
 </body>
 

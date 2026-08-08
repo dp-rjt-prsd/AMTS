@@ -1,52 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException
+"""Asset status routes."""
 
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Request
 
-from app.database import SessionLocal
+from app.auth.auth_bearer import AdminUser
+from app.deps import AssetIdPath, DbSession
+from app.schemas.asset_schema import AssetResponse, AssetStatusUpdate
+from app.services import asset_service
 
-from app.models.asset import Asset
-
-from app.auth.auth_bearer import require_admin
-
-
-router = APIRouter()
+router = APIRouter(tags=["assets"])
 
 
-def get_db():
-
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        db.close()
-
-
-@router.put("/assets/{asset_id}/status")
+@router.put("/assets/{asset_id}/status", response_model=AssetResponse)
 def update_asset_status(
-    asset_id: str,
-    status_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    asset_id: AssetIdPath,
+    payload: AssetStatusUpdate,
+    db: DbSession,
+    current_user: AdminUser,
+    request: Request,
 ):
-    """Update asset status - Admin only"""
-
-    asset = db.query(Asset).filter(
-        Asset.asset_id == asset_id
-    ).first()
-
-    if not asset:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Asset not found"
-        )
-
-    asset.status_id = status_id
-
-    db.commit()
-
-    return {
-        "message": "Asset status updated successfully"
-    }
+    """Update an asset's status. Administrators only."""
+    asset = asset_service.get_asset_or_404(db, asset_id)
+    asset = asset_service.update_status(
+        db, asset, payload.status_id, current_user, request=request
+    )
+    return AssetResponse(**asset_service.to_dict(asset))

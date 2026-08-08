@@ -1,277 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - AMTS</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-    <!-- MODERN DARK LAYOUT -->
+
+    <noscript>
+        <div class="noscript-banner">
+            This application requires JavaScript. Please enable it in your browser settings,
+            then reload this page.
+        </div>
+    </noscript>
+
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <div class="app-layout">
 
-    <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">AMTS</div>
 
-    <aside
-        class="sidebar"
-        id="sidebar"
-    >
+            <div class="sidebar-user">
+                <div id="sidebarUserName">User</div>
+                <small id="sidebarUserRole">Employee</small>
+            </div>
 
-        <div class="sidebar-header">
-            AMTS
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="assets.html">Assets</a>
+                <a href="transfers.html">Transfers</a>
+                <a href="repairs.html">Repairs</a>
+                <a href="qr_scan.html">QR Scanner</a>
+                <a href="users.html" class="admin-only">Users</a>
+                <button type="button" class="logout" onclick="logout()">Logout</button>
+            </nav>
+        </aside>
+
+        <div class="main-area">
+
+            <header class="topbar">
+                <button
+                    type="button"
+                    class="menu-toggle"
+                    data-sidebar-toggle
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation menu"
+                    onclick="toggleSidebar()"
+                >☰</button>
+
+                <h2 id="pageTitle">Dashboard</h2>
+
+                <button type="button" onclick="loadDashboard()">Refresh</button>
+            </header>
+
+            <main class="page-content" id="main-content">
+
+                <h1 class="page-title">Overview</h1>
+
+                <p id="loadingState" class="loading-state" role="status" aria-live="polite" hidden>
+                    Loading dashboard...
+                </p>
+
+                <div class="card-container">
+
+                    <section class="role-section admin-only visible" aria-label="Administrator summary">
+                        <div class="card">
+                            <h3>Total Assets</h3>
+                            <p id="totalAssets">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Total Users</h3>
+                            <p id="totalUsers">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Assets In Repair</h3>
+                            <p id="repairAssets">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Retired Assets</h3>
+                            <p id="retiredAssets">-</p>
+                        </div>
+                    </section>
+
+                    <section class="role-section department-head-only" aria-label="Department summary">
+                        <div class="card">
+                            <h3>Department Assets</h3>
+                            <p id="dhDeptAssets">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Available Assets</h3>
+                            <p id="dhAvailableAssets">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Team Members</h3>
+                            <p id="dhTeamMembers">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Assigned Assets</h3>
+                            <p id="dhAssignedAssets">-</p>
+                        </div>
+                    </section>
+
+                    <section class="role-section employee-only" aria-label="My summary">
+                        <div class="card">
+                            <h3>My Assets</h3>
+                            <p id="empMyAssets">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Open Repairs</h3>
+                            <p id="empMyRepairs">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Available Assets</h3>
+                            <p id="empAvailableAssets">-</p>
+                        </div>
+                        <div class="card">
+                            <h3>Assigned Assets</h3>
+                            <p id="empAssignedAssets">-</p>
+                        </div>
+                    </section>
+
+                </div>
+
+                <section class="card chart-card">
+                    <h2>Asset Status Distribution</h2>
+
+                    <div class="chart-holder">
+                        <canvas id="assetStatusChart" aria-label="Asset status distribution chart" role="img"></canvas>
+                    </div>
+
+                    <p id="chartFallback" class="form-error" hidden>
+                        The charting library could not be loaded. The counts above remain accurate.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>Recent Transfers</h2>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <caption class="visually-hidden">Five most recent asset transfers</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Transfer ID</th>
+                                    <th scope="col">Asset ID</th>
+                                    <th scope="col">From</th>
+                                    <th scope="col">To</th>
+                                    <th scope="col">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transferTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </main>
         </div>
-
-        <div class="sidebar-user">
-
-            <div id="sidebarUserName">
-                User
-            </div>
-
-            <small id="sidebarUserRole">
-                Employee
-            </small>
-
-        </div>
-
-        <nav class="sidebar-nav">
-
-            <a
-                href="dashboard.html"
-                class="active"
-            >
-                Dashboard
-            </a>
-
-            <a href="assets.html">
-                Assets
-            </a>
-
-            <a href="transfers.html">
-                Transfers
-            </a>
-
-            <a href="repairs.html">
-                Repairs
-            </a>
-
-            <a href="qr_scan.html">
-                QR Scanner
-            </a>
-
-            <a
-                href="users.html"
-                class="admin-only"
-            >
-                Users
-            </a>
-
-            <a
-                href="#"
-                class="logout"
-                onclick="logout()"
-            >
-                Logout
-            </a>
-
-        </nav>
-
-    </aside>
-
-    <!-- MAIN -->
-
-    <div class="main-area">
-
-        <!-- TOPBAR -->
-
-        <header class="topbar">
-
-            <div
-                class="menu-toggle"
-                onclick="toggleSidebar()"
-            >
-                ☰
-            </div>
-
-            <h2>
-                Dashboard
-            </h2>
-
-            <button
-                onclick="loadDashboardData()"
-            >
-                Refresh
-            </button>
-
-        </header>
-
-        <!-- CONTENT -->
-
-        <main class="page-content">
-
-            <h1 class="page-title">
-                Dashboard Overview
-            </h1>
-
-            <!-- KPI CARDS -->
-
-            <div class="card-container">
-
-                <!-- ===================== ADMIN ===================== -->
-                <div class="role-section admin-only visible">
-                    <div class="card">
-                        <h3>Total Assets</h3>
-                        <p id="totalAssets">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>Total Users</h3>
-                        <p id="totalUsers">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>Assets In Repair</h3>
-                        <p id="repairAssets">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>Retired Assets</h3>
-                        <p id="retiredAssets">...</p>
-                    </div>
-                </div>
-
-                <!-- ================= DEPARTMENT HEAD =============== -->
-                <div class="role-section department-head-only visible">
-                    <div class="card">
-                        <h3>Team Asset Scope</h3>
-                        <p id="dhDeptAssets">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>Available Assets</h3>
-                        <p id="dhAvailableAssets">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>Team Members</h3>
-                        <p id="dhTeamMembers">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>Assigned Assets</h3>
-                        <p id="dhAssignedAssets">...</p>
-                    </div>
-                </div>
-
-                <!-- ===================== EMPLOYEE ============== -->
-                <div class="role-section employee-only visible">
-                    <div class="card">
-                        <h3>My Assets</h3>
-                        <p id="empMyAssets">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>My Repairs</h3>
-                        <p id="empMyRepairs">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>Available Assets</h3>
-                        <p id="empAvailableAssets">...</p>
-                    </div>
-                    <div class="card">
-                        <h3>Assigned Assets</h3>
-                        <p id="empAssignedAssets">...</p>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- CHART -->
-
-            <section
-                class="card"
-                style="margin-bottom:24px;"
-            >
-
-                <h2
-                    style="margin-bottom:20px;"
-                >
-                    Asset Status Distribution
-                </h2>
-
-                <div style="position: relative; height: 300px;">
-                    <canvas
-                        id="assetStatusChart"
-                    ></canvas>
-                </div>
-
-            </section>
-
-            <!-- RECENT TRANSFERS -->
-
-            <section>
-
-                <div
-                    style="
-                        display:flex;
-                        justify-content:space-between;
-                        align-items:center;
-                        margin-bottom:16px;
-                    "
-                >
-
-                    <h2>
-                        Recent Transfers
-                    </h2>
-
-                </div>
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                        <tr>
-
-                            <th>
-                                Transfer ID
-                            </th>
-
-                            <th>
-                                Asset ID
-                            </th>
-
-                            <th>
-                                From User
-                            </th>
-
-                            <th>
-                                To User
-                            </th>
-
-                            <th>
-                                Timestamp
-                            </th>
-
-                        </tr>
-
-                        </thead>
-
-                        <tbody
-                            id="transferTable"
-                        >
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
-
-        </main>
-
     </div>
 
-</div>
+    <!-- Vendored locally so the chart works on an isolated network. -->
+    <script src="vendor/chart.umd.min.js"></script>
 
-<script src="js/utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>requireAuth();</script>
-<script src="js/dashboard.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/dashboard.js"></script>
 
 </body>
 

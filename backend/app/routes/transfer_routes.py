@@ -1,184 +1,55 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+"""Asset transfer routes."""
 
-from app.database import SessionLocal
+from fastapi import APIRouter, Query, Request, status
 
-from app.models.asset import Asset
-from app.models.user import User
-from app.models.transfer_log import AssetTransferLog
-
+from app.auth.auth_bearer import AdminUser, CurrentUser
+from app.deps import AssetIdPath, DbSession
 from app.schemas.transfer_schema import TransferCreate, TransferResponse
+from app.services import asset_service, transfer_service
 
-from app.auth.auth_bearer import get_current_user, require_admin
-
-
-router = APIRouter()
+router = APIRouter(tags=["transfers"])
 
 
-def get_db():
-
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        db.close()
-
-
-@router.post("/transfer")
+@router.post(
+    "/transfer",
+    response_model=TransferResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def transfer_asset(
-    transfer: TransferCreate,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    payload: TransferCreate,
+    db: DbSession,
+    current_user: AdminUser,
+    request: Request,
 ):
-    """Transfer asset to another user - Admin only"""
-
-    try:
-
-        # CHECK ASSET EXISTS
-        asset = db.query(Asset).filter(
-            Asset.asset_id == transfer.asset_id.upper()
-        ).first()
-
-        if not asset:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Asset {transfer.asset_id} not found"
-            )
-
-        # CHECK RECEIVING USER EXISTS
-        to_user = db.query(User).filter(
-            User.user_id == transfer.to_user_id
-        ).first()
-
-        if not to_user:
-            raise HTTPException(
-                status_code=404,
-                detail=f"User ID {transfer.to_user_id} not found"
-            )
-
-        old_holder = asset.current_holder_id
-        asset.current_holder_id = transfer.to_user_id
-
-        transfer_log = AssetTransferLog(
-            asset_id=transfer.asset_id.upper(),
-            from_user_id=old_holder,
-            to_user_id=transfer.to_user_id,
-            remarks=transfer.remarks
-        )
-
-        db.add(transfer_log)
-        db.commit()
-
-        return {
-            "message": "Asset transferred successfully",
-            "transfer_id": transfer_log.transfer_id
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Error during transfer"
-        )
+    """Transfer an asset to another user. Administrators only."""
+    log = transfer_service.transfer_asset(db, payload, current_user, request=request)
+    return TransferResponse(**transfer_service.to_dict(log))
 
 
-@router.get("/transfers")
-def get_transfers(
+@router.get("/transfers", response_model=list[TransferResponse])
+def list_transfers(
+    db: DbSession,
+    current_user: CurrentUser,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
 ):
-    """Get all asset transfers - Any authenticated user"""
-
-    try:
-
-        transfers = db.query(
-            AssetTransferLog
-        ).order_by(
-            AssetTransferLog.transferred_at.desc()
-        ).offset(skip).limit(limit).all()
-
-        # Fetch users to map IDs to names
-        users = {u.user_id: u.name for u in db.query(User).all()}
-
-        return [
-            {
-                "transfer_id": t.transfer_id,
-                "asset_id": t.asset_id,
-                "from_user_id": t.from_user_id,
-                "to_user_id": t.to_user_id,
-                "from_user_name": users.get(t.from_user_id, "Unknown"),
-                "to_user_name": users.get(t.to_user_id, "Unknown"),
-                "remarks": t.remarks,
-                "transferred_at": t.transferred_at
-            }
-            for t in transfers
-        ]
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail="Error fetching transfers"
-        )
+    """List transfers for assets the caller can see."""
+    logs = transfer_service.list_transfers(db, current_user, skip=skip, limit=limit)
+    return [TransferResponse(**transfer_service.to_dict(t)) for t in logs]
 
 
-@router.get("/assets/{asset_id}/transfers")
-def get_asset_transfer_history(
-    asset_id: str,
+@router.get("/assets/{asset_id}/transfers", response_model=list[TransferResponse])
+def asset_transfer_history(
+    asset_id: AssetIdPath,
+    db: DbSession,
+    current_user: CurrentUser,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
 ):
-    """Get transfer history for specific asset - Any authenticated user"""
+    # Resolve visibility first, so an invisible asset 404s instead of returning [].
+    asset_service.get_visible_asset_or_404(db, asset_id, current_user)
 
-    try:
-
-        asset = db.query(Asset).filter(
-            Asset.asset_id == asset_id.upper()
-        ).first()
-
-        if not asset:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Asset {asset_id} not found"
-            )
-
-        transfers = db.query(
-            AssetTransferLog
-        ).filter(
-            AssetTransferLog.asset_id == asset_id.upper()
-        ).order_by(
-            AssetTransferLog.transferred_at.desc()
-        ).offset(skip).limit(limit).all()
-
-        # Fetch users to map IDs to names
-        users = {u.user_id: u.name for u in db.query(User).all()}
-
-        return [
-            {
-                "transfer_id": t.transfer_id,
-                "asset_id": t.asset_id,
-                "from_user_id": t.from_user_id,
-                "to_user_id": t.to_user_id,
-                "from_user_name": users.get(t.from_user_id, "Unknown"),
-                "to_user_name": users.get(t.to_user_id, "Unknown"),
-                "remarks": t.remarks,
-                "transferred_at": t.transferred_at
-            }
-            for t in transfers
-        ]
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail="Error fetching transfer history"
-        )
+    logs = transfer_service.list_transfers(
+        db, current_user, skip=skip, limit=limit, asset_id=asset_id
+    )
+    return [TransferResponse(**transfer_service.to_dict(t)) for t in logs]

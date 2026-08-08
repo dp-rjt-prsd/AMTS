@@ -1,134 +1,98 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from passlib.context import CryptContext
-from app.database import SessionLocal
-from app.models.user import User
-from app.schemas.auth_schema import LoginRequest
-from app.schemas.user_schema import UserCreate, UserResponse
+"""Authentication routes."""
+
+import logging
+
+from fastapi import APIRouter, HTTPException, Request, status
+
+from app.auth.auth_bearer import AdminUser, CurrentUser
 from app.auth.auth_handler import create_access_token
+from app.config import settings
+from app.deps import DbSession
+from app.enums import AuditAction
+from app.schemas.auth_schema import LoginRequest
+from app.schemas.user_schema import LoginResponse, UserCreateAdmin, UserResponse
+from app.security import limiter
+from app.services import audit_service, user_service
+
+logger = logging.getLogger("amts")
+
+router = APIRouter(tags=["auth"])
 
 
-router = APIRouter()
-
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
 )
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-@router.post("/register", response_model=UserResponse)
 def register(
-    user: UserCreate,
-    db: Session = Depends(get_db)
+    payload: UserCreateAdmin,
+    db: DbSession,
+    current_user: AdminUser,
+    request: Request,
 ):
-    """
-    Register a new user
-    
-    - **emp_id**: Employee ID (required, 3-50 chars)
-    - **name**: Full name (required, 2-100 chars)
-    - **email**: User email (required)
-    - **password**: Password (required, min 8 chars)
-    - **role**: User role (ADMIN, DEPARTMENT_HEAD, EMPLOYEE) - defaults to EMPLOYEE
-    - **dept_id**: Department ID (optional)
-    """
-    
-    # CHECK IF EMAIL EXISTS
-    existing_email = db.query(User).filter(User.email == user.email).first()
-    if existing_email:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
-        )
-    
-    # CHECK IF EMP_ID EXISTS
-    existing_emp = db.query(User).filter(User.emp_id == user.emp_id).first()
-    if existing_emp:
-        raise HTTPException(
-            status_code=400,
-            detail="Employee ID already exists"
-        )
-    
-    # VALIDATE ROLE
-    valid_roles = ["ADMIN", "DEPARTMENT_HEAD", "EMPLOYEE"]
-    if user.role not in valid_roles:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}"
-        )
-    
-    # HASH PASSWORD
-    hashed_password = pwd_context.hash(user.password)
-    
-    # CREATE USER
-    new_user = User(
-        emp_id=user.emp_id,
-        name=user.name,
-        email=user.email,
-        pw_hash=hashed_password,
-        role=user.role,
-        dept_id=user.dept_id
+    """Create a user account. Administrators only; the first admin comes from seed.py."""
+    user = user_service.create_user(
+        db,
+        payload,
+        current_user,
+        role=payload.role,
+        request=request,
     )
-    
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    return new_user
+    return user
 
 
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
+@limiter.limit(settings.LOGIN_RATE_LIMIT)
 def login(
+    request: Request,
     credentials: LoginRequest,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
-    """
-    Login user and return JWT token with user information
-    
-    - **email**: User email
-    - **password**: User password
-    """
-    
-    user = db.query(User).filter(
-        User.email == credentials.email
-    ).first()
+    """Exchange credentials for an access token."""
+    user = user_service.authenticate(db, credentials.email, credentials.password)
 
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password"
+    if user is None:
+        # Deliberately identical for unknown-email and wrong-password.
+        audit_service.record(
+            db,
+            action=AuditAction.LOGIN_FAILED,
+            entity_type="user",
+            entity_id=credentials.email,
+            request=request,
         )
+        db.commit()
 
-    password_valid = pwd_context.verify(
-        credentials.password,
-        user.pw_hash
-    )
-
-    if not password_valid:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
         )
 
     token = create_access_token(
-        data={
-            "user_id": user.user_id,
-            "email": user.email,
-            "role": user.role
-        }
+        user_id=user.user_id,
+        email=user.email,
+        role=user.role.value,
+        name=user.name,
     )
 
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "role": user.role,
-        "name": user.name,
-        "user_id": user.user_id
-    }
+    audit_service.record(
+        db,
+        action=AuditAction.LOGIN_SUCCEEDED,
+        entity_type="user",
+        entity_id=user.user_id,
+        actor={"user_id": user.user_id, "email": user.email},
+        request=request,
+    )
+    db.commit()
+
+    return LoginResponse(
+        access_token=token,
+        role=user.role,
+        name=user.name,
+        user_id=user.user_id,
+    )
+
+
+@router.get("/me", response_model=UserResponse)
+def read_current_user(db: DbSession, current_user: CurrentUser):
+    """Return the authenticated user's own profile."""
+    return user_service.get_user_or_404(db, current_user["user_id"])

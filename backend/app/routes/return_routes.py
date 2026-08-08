@@ -1,72 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException
+"""Asset return routes."""
 
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Request
 
-from app.database import SessionLocal
+from app.auth.auth_bearer import AdminUser
+from app.deps import AssetIdPath, DbSession
+from app.schemas.transfer_schema import ReturnRequest, TransferResponse
+from app.services import transfer_service
 
-from app.models.asset import Asset
-from app.models.transfer_log import AssetTransferLog
-
-from app.auth.auth_bearer import require_admin
-
-
-router = APIRouter()
+router = APIRouter(tags=["returns"])
 
 
-def get_db():
-
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        db.close()
-
-
-@router.post("/return/{asset_id}")
+@router.post("/return/{asset_id}", response_model=TransferResponse)
 def return_asset(
-    asset_id: str,
-    remarks: str = "",
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    asset_id: AssetIdPath,
+    payload: ReturnRequest,
+    db: DbSession,
+    current_user: AdminUser,
+    request: Request,
 ):
-    """Return asset to inventory - Admin only"""
-
-    asset = db.query(Asset).filter(
-        Asset.asset_id == asset_id
-    ).first()
-
-    if not asset:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Asset not found"
-        )
-
-    previous_holder = asset.current_holder_id
-
-    # REMOVE HOLDER
-
-    asset.current_holder_id = None
-
-    # SET STATUS TO AVAILABLE
-
-    asset.status_id = 1
-
-    # CREATE RETURN LOG
-
-    transfer_log = AssetTransferLog(
-        asset_id=asset.asset_id,
-        from_user_id=previous_holder,
-        to_user_id=None,
-        remarks=f"Asset returned. {remarks}"
+    """Return an asset to inventory. Administrators only."""
+    log = transfer_service.return_asset(
+        db, asset_id, payload.remarks, current_user, request=request
     )
-
-    db.add(transfer_log)
-
-    db.commit()
-
-    return {
-        "message": "Asset returned successfully"
-    }
+    return TransferResponse(**transfer_service.to_dict(log))

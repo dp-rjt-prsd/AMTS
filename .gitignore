@@ -1,35 +1,137 @@
-# Python cache
+# Secrets and local configuration.
+# If a .env is ever committed, rotate the DB password and SECRET_KEY — git
+# history keeps them even after deletion.
+.env
+.env.*
+*.env
+!.env.example
+!**/.env.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+
+
+# Database dumps and local databases.
+# Dumps contain real user rows and password hashes. The schema lives in
+# backend/alembic/versions/ and reference data in backend/seed.py.
+*.sql
+*.sql.gz
+*.dump
+backup_*.sql
+
+*.db
+*.sqlite
+*.sqlite3
+
+
+# Local-only notes. Contains local passwords and machine-specific paths.
+TESTING.md
+
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 
-# Virtual environments
 venv/
 .venv/
+env/
+ENV/
+virtualenv/
 
-# Environment variables
-.env
-
-# VS Code
-.vscode/
-
-# PyCharm
-.idea/
-
-# Logs
-*.log
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Test cache
-.pytest_cache/
-
-# Distribution / packaging
 build/
 dist/
+*.egg
 *.egg-info/
+.eggs/
+pip-wheel-metadata/
+*.manifest
+*.spec
 
-# SQLite
-*.sqlite3
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+
+# Testing and coverage
+.pytest_cache/
+.tox/
+.nox/
+.hypothesis/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+nosetests.xml
+test-results/
+
+
+# Logs and runtime artefacts
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+
+# Editors and IDEs
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+
+# Operating system
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+
+# Scratch files
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+scratch/
+tmp/
+temp/
+
+
+# Node. This project has no frontend build step; these entries only stop a
+# stray `npm install` from landing in a commit.
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.parcel-cache/
+
+
+# Deliberately NOT ignored, do not add these:
+#   frontend/vendor/            Chart.js and jsQR must ship, for air-gapped networks.
+#   backend/alembic/versions/   Migrations are source code.
+#   backend/.env.example        Template with no real values.

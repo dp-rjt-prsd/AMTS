@@ -1,37 +1,65 @@
-from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.enums import Role
 
 
 class UserCreate(BaseModel):
-    """Schema for user registration"""
-    emp_id: str = Field(..., min_length=3, max_length=50, description="Employee ID")
-    name: str = Field(..., min_length=2, max_length=100, description="Full name")
-    email: EmailStr = Field(..., description="User email")
-    password: str = Field(..., min_length=8, max_length=100, description="Password (min 8 chars)")
-    role: str = Field("NORMAL_USER", description="User role: ADMIN, DEPARTMENT_HEAD, NORMAL_USER")
-    dept_id: Optional[int] = Field(None, description="Department ID")
+    """Fields for creating a user. Role is set by the server, never taken from the body."""
 
-    class Config:
-        json_schema_extra = {
+    emp_id: str = Field(..., min_length=3, max_length=50)
+    name: str = Field(..., min_length=2, max_length=100)
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+    dept_id: Optional[int] = Field(None, ge=1)
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "emp_id": "EMP001",
-                "name": "John Doe",
-                "email": "john@example.com",
-                "password": "SecurePass123",
-                "role": "NORMAL_USER",
-                "dept_id": 1
+                "emp_id": "EMP002",
+                "name": "Jane Doe",
+                "email": "jane@example.gov",
+                "password": "correct-horse-battery",
+                "dept_id": 1,
             }
         }
+    )
+
+
+class UserCreateAdmin(UserCreate):
+    """Admin-only creation, which may additionally set the role."""
+
+    role: Role = Role.EMPLOYEE
+
+
+class RoleUpdate(BaseModel):
+    role: Role
 
 
 class UserResponse(BaseModel):
-    """Schema for user response"""
     user_id: int
-    emp_id: Optional[str]
-    name: Optional[str]
-    email: str
-    role: str
+    emp_id: str
+    name: str
+    email: EmailStr
+    role: Role
     dept_id: Optional[int]
+    created_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DepartmentResponse(BaseModel):
+    dept_id: int
+    dept_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    role: Role
+    name: str
+    user_id: int

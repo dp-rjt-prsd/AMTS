@@ -1,331 +1,77 @@
-const API_BASE_URL =
-    "http://127.0.0.1:8000";
+/* Login. Account creation is an admin action on the Users page, so there is no
+   registration flow here. */
 
-// ======================================
-// INIT
-// ======================================
+document.addEventListener("DOMContentLoaded", function () {
+    const loginForm = document.getElementById("loginForm");
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+    if (getToken() && loginForm) {
+        window.location.href = "dashboard.html";
+        return;
+    }
 
-        const token =
-            localStorage.getItem(
-                "token"
-            );
+    if (loginForm) loginForm.addEventListener("submit", login);
+});
 
-        // If on login/register page and already logged in, redirect to dashboard
-        if (token && (document.getElementById("loginForm") || document.getElementById("registerForm"))) {
-            window.location.href = "dashboard.html";
+async function login(event) {
+    event.preventDefault();
+
+    const button = document.querySelector("#loginForm button[type='submit']");
+    const original = button ? button.textContent : "";
+    const errorBox = document.getElementById("loginError");
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Signing in...";
+    }
+    if (errorBox) errorBox.hidden = true;
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+        const response = await fetch(API_BASE_URL + "/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email, password: password })
+        });
+
+        const data = await response.json().catch(function () {
+            return null;
+        });
+
+        if (!response.ok) {
+            const message =
+                response.status === 429
+                    ? "Too many sign-in attempts. Please wait a minute and try again."
+                    : extractErrorMessage(data, response.status);
+
+            showLoginError(message);
             return;
         }
 
-        // Login form handler
-        if (document.getElementById("loginForm")) {
-            document
-                .getElementById(
-                    "loginForm"
-                )
-                .addEventListener(
-                    "submit",
-                    login
-                );
-        }
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("user_name", data.name);
+        localStorage.setItem("user_id", data.user_id);
 
-        // Register form handler
-        if (document.getElementById("registerForm")) {
-            document
-                .getElementById(
-                    "registerForm"
-                )
-                .addEventListener(
-                    "submit",
-                    register
-                );
-        }
-    }
-);
-
-// ======================================
-// LOGIN
-// ======================================
-
-async function login(
-    event
-) {
-
-    event.preventDefault();
-
-    const button =
-        document.querySelector(
-            "#loginForm button"
-        );
-
-    const originalText =
-        button.innerText;
-
-    button.disabled =
-        true;
-
-    button.innerText =
-        "Signing In...";
-
-    const email =
-        document
-            .getElementById(
-                "email"
-            )
-            .value
-            .trim();
-
-    const password =
-        document
-            .getElementById(
-                "password"
-            )
-            .value;
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/login`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            email,
-
-                            password
-
-                        })
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            showToast(
-                data.detail ||
-                "Login Failed",
-                "error"
-            );
-
-            button.disabled =
-                false;
-
-            button.innerText =
-                originalText;
-
-            return;
-        }
-
-        // ==================================
-        // SAVE SESSION
-        // ==================================
-
-        localStorage.setItem(
-            "token",
-            data.access_token
-        );
-
-        localStorage.setItem(
-            "role",
-            data.role
-        );
-
-        localStorage.setItem(
-            "user_name",
-            data.name
-        );
-
-        localStorage.setItem(
-            "user_id",
-            data.user_id
-        );
-
-        showToast(
-            "Login Successful"
-        );
-
-        setTimeout(
-            () => {
-
-                window.location.href =
-                    "dashboard.html";
-
-            },
-            500
-        );
-
-    }
-    catch (error) {
-
-        console.error(error);
-
-        showToast(
-            "Unable to connect to server",
-            "error"
-        );
-
-        button.disabled =
-            false;
-
-        button.innerText =
-            originalText;
-    }
-}
-
-// ======================================
-// REGISTER
-// ======================================
-
-async function register(
-    event
-) {
-
-    event.preventDefault();
-
-    const button =
-        document.querySelector(
-            "#registerForm button"
-        );
-
-    const originalText =
-        button.innerText;
-
-    button.disabled = true;
-    button.innerText = "Creating Account...";
-
-    const emp_id =
-        document
-            .getElementById("emp_id")
-            .value
-            .trim();
-
-    const name =
-        document
-            .getElementById("name")
-            .value
-            .trim();
-
-    const email =
-        document
-            .getElementById("email")
-            .value
-            .trim();
-
-    const password =
-        document
-            .getElementById("password")
-            .value;
-
-    const role =
-        document
-            .getElementById("role")
-            .value;
-            
-    const dept_id_el = document.getElementById("dept_id");
-    const dept_id = dept_id_el && dept_id_el.value ? parseInt(dept_id_el.value) : null;
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_BASE_URL}/register`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-                            emp_id,
-                            name,
-                            email,
-                            password,
-                            role,
-                            dept_id
-                        })
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            showToast(
-                data.detail ||
-                "Registration Failed",
-                "error"
-            );
-
+        window.location.href = "dashboard.html";
+    } catch (error) {
+        showLoginError("Unable to reach the server. Check your connection and try again.");
+    } finally {
+        if (button) {
             button.disabled = false;
-            button.innerText = originalText;
-
-            return;
+            button.textContent = original;
         }
-
-        showToast(
-            "Account created successfully! Redirecting to login...",
-            "success"
-        );
-
-        setTimeout(
-            () => {
-
-                window.location.href =
-                    "login.html";
-
-            },
-            2000
-        );
-
-    }
-    catch (error) {
-
-        console.error(error);
-
-        showToast(
-            "Unable to connect to server",
-            "error"
-        );
-
-        button.disabled = false;
-        button.innerText = originalText;
     }
 }
 
-// ======================================
-// LOGOUT
-// ======================================
+function showLoginError(message) {
+    const errorBox = document.getElementById("loginError");
 
-function logout() {
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("user_id");
-
-    showToast("Logged out successfully");
-
-    setTimeout(
-        () => {
-            window.location.href = "login.html";
-        },
-        500
-    );
+    if (errorBox) {
+        errorBox.textContent = message;
+        errorBox.hidden = false;
+    } else {
+        showToast(message, "error");
+    }
 }

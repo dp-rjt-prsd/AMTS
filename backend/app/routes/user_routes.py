@@ -1,57 +1,55 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.auth.auth_bearer import get_current_user, require_admin
+"""User routes."""
 
-from app.database import SessionLocal
-from app.models.user import User
-from app.schemas.user_schema import UserResponse
+from fastapi import APIRouter, HTTPException, Query, Request, status
+from sqlalchemy import select
 
-router = APIRouter()
+from app.auth.auth_bearer import AdminUser, CurrentUser, DepartmentHeadUser
+from app.deps import DbSession
+from app.enums import Role
+from app.models.department import Department
+from app.schemas.user_schema import DepartmentResponse, RoleUpdate, UserResponse
+from app.services import user_service
+
+router = APIRouter(tags=["users"])
 
 
-# DATABASE SESSION
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@router.get("/departments", response_model=list[DepartmentResponse])
+def list_departments(db: DbSession, current_user: CurrentUser):
+    return db.execute(select(Department).order_by(Department.dept_name)).scalars().all()
 
 
 @router.get("/users", response_model=list[UserResponse])
-def get_users(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+def list_users(
+    db: DbSession,
+    current_user: DepartmentHeadUser,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(200, ge=1, le=500),
 ):
-    """
-    Get all users - Admin only
-    """
-    users = db.query(User).all()
-    return users
+    """Admins see everyone; department heads see their own department."""
+    return user_service.list_users(db, current_user, skip=skip, limit=limit)
 
 
 @router.get("/users/{user_id}", response_model=UserResponse)
-def get_user(
+def get_user(user_id: int, db: DbSession, current_user: CurrentUser):
+    """Fetch your own profile, or any profile if admin."""
+    if current_user["user_id"] != user_id and current_user.get("role") != Role.ADMIN.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorised to view this user",
+        )
+
+    return user_service.get_user_or_404(db, user_id)
+
+
+@router.patch("/users/{user_id}/role", response_model=UserResponse)
+def change_user_role(
     user_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    payload: RoleUpdate,
+    db: DbSession,
+    current_user: AdminUser,
+    request: Request,
 ):
-    """
-    Get specific user by ID - Any authenticated user can access their own profile
-    """
-    # Allow users to access their own profile or admins to access any profile
-    if current_user.get("user_id") != user_id and current_user.get("role") != "ADMIN":
-        raise HTTPException(
-            status_code=403,
-            detail="Not authorized to access this user"
-        )
-    
-    user = db.query(User).filter(User.user_id == user_id).first()
-    
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
-    
-    return user
+    """Change a user's role. Kept separate from creation so granting privilege is always explicit."""
+    return user_service.change_role(
+        db, user_id, payload.role, current_user, request=request
+    )

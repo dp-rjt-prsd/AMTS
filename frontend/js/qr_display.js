@@ -1,112 +1,74 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+/* QR display page */
 
-// ======================================
-// INIT
-// ======================================
+document.addEventListener("DOMContentLoaded", function () {
+    if (!requireAuth()) return;
 
-document.addEventListener("DOMContentLoaded", () => {
-    if (!requireAuth()) {
-        return;
-    }
-
-    applyRoleRules();
     loadCurrentUser();
+    applyRoleRules();
 
-    // Get asset ID from URL params
-    const params = new URLSearchParams(window.location.search);
-    const assetId = params.get("asset_id");
+    const assetId = new URLSearchParams(window.location.search).get("asset_id");
 
     if (!assetId) {
-        showError("Asset ID not provided");
+        showError("No asset ID was provided.");
         return;
     }
 
     loadAssetQR(assetId);
-});
 
-// ======================================
-// LOAD ASSET QR
-// ======================================
+    const printBtn = document.getElementById("printBtn");
+    if (printBtn) printBtn.addEventListener("click", printQR);
+});
 
 async function loadAssetQR(assetId) {
     try {
-        const response = await fetch(
-            `${API_BASE_URL}/assets/${assetId}`,
-            {
-                headers: getAuthHeader(),
-            }
-        );
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                logout();
-                throw new Error("Session expired");
-            }
-
-            if (response.status === 404) {
-                showError(`Asset ${assetId} not found`);
-                return;
-            }
-
-            throw new Error("Failed to load asset");
-        }
-
-        const asset = await response.json();
-
+        const asset = await apiFetch("/assets/" + escUrl(assetId));
         displayQR(asset);
     } catch (error) {
-        console.error("Error loading asset:", error);
-        showError("Failed to load asset details");
+        showError(error.message);
     }
 }
-
-// ======================================
-// DISPLAY QR
-// ======================================
 
 function displayQR(asset) {
-    // Hide loading, show content
-    document.getElementById("loadingState").style.display = "none";
-    document.getElementById("qrContent").style.display = "block";
+    toggleState({ loading: false, content: true, error: false });
 
-    // Display QR code
-    if (asset.qr_code) {
-        document.getElementById("qrImage").src = asset.qr_code;
+    const image = document.getElementById("qrImage");
+    if (image) {
+        image.src = safeQrSrc(asset.qr_code);
+        image.alt = "QR code for asset " + asset.asset_id;
     }
 
-    // Display asset details
-    document.getElementById("assetId").innerText = asset.asset_id;
-    document.getElementById("assetName").innerText = asset.asset_name;
-    document.getElementById("assetType").innerText = asset.asset_type_id || "-";
-
-    // Get status name from asset (if available) or show ID
-    document.getElementById("assetStatus").innerText =
-        asset.status_name || asset.status_id || "-";
+    setText("assetId", asset.asset_id);
+    setText("assetName", asset.asset_name);
+    setText("assetType", asset.asset_type_name || "-");
+    setText("assetStatus", asset.status_name || "-");
 }
 
-// ======================================
-// PRINT QR
-// ======================================
+function toggleState(state) {
+    const map = {
+        loadingState: state.loading,
+        qrContent: state.content,
+        errorState: state.error
+    };
+
+    Object.keys(map).forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.hidden = !map[id];
+    });
+}
 
 function printQR() {
-    window.print();
+    printQrLabel(
+        document.getElementById("assetId").textContent,
+        document.getElementById("assetName").textContent,
+        document.getElementById("qrImage").src
+    );
 }
-
-// ======================================
-// NAVIGATION
-// ======================================
 
 function goBack() {
     window.location.href = "assets.html";
 }
 
-// ======================================
-// ERROR HANDLING
-// ======================================
-
 function showError(message) {
-    document.getElementById("loadingState").style.display = "none";
-    document.getElementById("qrContent").style.display = "none";
-    document.getElementById("errorState").style.display = "block";
-    document.getElementById("errorMessage").innerText = message;
+    toggleState({ loading: false, content: false, error: true });
+    setText("errorMessage", message);
 }

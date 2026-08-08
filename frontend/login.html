@@ -2,125 +2,68 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        Asset Management System
-    </title>
-
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in - Asset Management &amp; Tracking System</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body class="login-page">
 
-    <div class="login-container">
+    <noscript>
+        <div class="noscript-banner">
+            This application requires JavaScript. Please enable it in your browser settings,
+            then reload this page.
+        </div>
+    </noscript>
 
-        <h1>
-            Asset Management System
-        </h1>
+    <main class="login-container">
 
-        <p
-            style="
-                text-align:center;
-                color:var(--muted);
-                margin-bottom:24px;
-            "
-        >
-            Sign in to continue
-        </p>
+        <h1>Asset Management &amp; Tracking System</h1>
 
-        <form id="loginForm">
+        <p class="login-subtitle">Sign in to continue</p>
 
-            <div>
+        <!-- role="alert" so the failure is announced, not just shown -->
+        <p id="loginError" class="form-error" role="alert" hidden></p>
 
-                <label
-                    for="email"
-                    style="
-                        display:block;
-                        margin-bottom:8px;
-                        font-weight:500;
-                    "
-                >
-                    Email
-                </label>
+        <form id="loginForm" novalidate>
 
+            <div class="field">
+                <label for="email">Email</label>
                 <input
                     type="email"
                     id="email"
-                    placeholder="Enter your email"
+                    name="email"
+                    autocomplete="username"
+                    placeholder="you@example.gov"
                     required
                 >
-
             </div>
 
-            <div
-                style="margin-top:16px;"
-            >
-
-                <label
-                    for="password"
-                    style="
-                        display:block;
-                        margin-bottom:8px;
-                        font-weight:500;
-                    "
-                >
-                    Password
-                </label>
-
+            <div class="field">
+                <label for="password">Password</label>
                 <input
                     type="password"
                     id="password"
+                    name="password"
+                    autocomplete="current-password"
                     placeholder="Enter your password"
                     required
                 >
-
             </div>
 
-            <button
-                type="submit"
-                style="
-                    width:100%;
-                    margin-top:24px;
-                "
-            >
-                Sign In
-            </button>
+            <button type="submit" class="btn-block">Sign In</button>
 
         </form>
 
-        <p
-            style="
-                text-align:center;
-                margin-top:16px;
-                font-size:14px;
-            "
-        >
-            Don't have an account?
-            <a
-                href="register.html"
-                style="
-                    color: var(--accent);
-                    text-decoration:none;
-                    font-weight:500;
-                "
-            >
-                Register here
-            </a>
+        <!-- Accounts are created by an administrator on the Users page. -->
+        <p class="login-footnote">
+            Need an account? Contact your system administrator.
         </p>
 
-    </div>
+    </main>
 
+    <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
 
