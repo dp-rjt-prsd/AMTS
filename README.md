@@ -238,3 +238,5 @@ The access token is stored in `localStorage`. Moving it to an `HttpOnly` cookie 
 ## License
 
 This project is currently unlicensed. All rights reserved by the author.
+
+Thank You
